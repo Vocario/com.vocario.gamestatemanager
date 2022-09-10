@@ -4,10 +4,16 @@ using System;
 using UnityEditor;
 using UnityEngine;
 
+public enum EGSMNodeType
+{
+    SingleChoice
+}
+
 public class GSMGraphView : GraphView
 {
     private GSMEditorWindow _editorWindow = null;
     private GSMSearchWindow _searchWindow = null;
+    private MiniMap _miniMap = null;
 
     public GSMGraphView(GSMEditorWindow editorWindow)
     {
@@ -39,6 +45,28 @@ public class GSMGraphView : GraphView
         this.AddManipulator(new ContentDragger());
         this.AddManipulator(new SelectionDragger());
         this.AddManipulator(new RectangleSelector());
+    }
+
+    internal GSMNode CreateNode(string nodeName, EGSMNodeType type, Vector2 position)
+    {
+        var nodeType = Type.GetType("GSMNode");
+        var node = (GSMNode) Activator.CreateInstance(nodeType);
+        node.Init(nodeName, this, position);
+        AddNode(node);
+        return node;
+    }
+
+    private void AddNode(GSMNode node)
+    {
+    }
+
+    internal Vector2 GetLocalMousePosition(Vector2 mousePosition, bool isSearchWindow = false)
+    {
+        Vector2 worldMousePosition = isSearchWindow
+            ? _editorWindow.rootVisualElement.ChangeCoordinatesTo(_editorWindow.rootVisualElement.parent, mousePosition - _editorWindow.position.position)
+            : mousePosition;
+        Vector2 localMousePosition = contentViewContainer.WorldToLocal(worldMousePosition);
+        return localMousePosition;
     }
 
     private void AddGridBackground()

@@ -1,10 +1,10 @@
 {
-    "name": "com.vocario.gamestatemanager.Editor",
+    "name": "com.vocario.gamestatemanager",
     "rootNamespace": "",
-    "references": [],
-    "includePlatforms": [
-        "Editor"
+    "references": [
+        "GUID:c008b7ec920a267488f1b2ca7740a4c5"
     ],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
