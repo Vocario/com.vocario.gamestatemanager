@@ -2,10 +2,15 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 
-public abstract class AState
+[Serializable]
+public abstract class AState : UnityEngine.Object
 {
+    protected Guid _id = new Guid();
+    [SerializeField]
     protected List<Transition> _transitions = new List<Transition>(1);
     protected StateMachine _parent = null;
+    public Guid Id => _id;
+    public bool IsInitial = false;
     public Action OnEnterDelegate = null;
     public Action OnExitDelegate = null;
 

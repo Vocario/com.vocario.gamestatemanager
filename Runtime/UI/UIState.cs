@@ -1,6 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System;
 
+[Serializable]
 public class UIState : AState
 {
     private UIManager _uIManager = null;
@@ -9,7 +11,7 @@ public class UIState : AState
     public List<UIScreenId> ScreensToShowOnExit = new List<UIScreenId>();
     public List<UIScreenId> ScreensToHideOnExit = new List<UIScreenId>();
 
-    public UIState(StateMachine parent, UIManager uiManager) : base(parent) => _uIManager = uiManager;
+    public UIState(StateMachine parent) : base(parent) => _uIManager = null;
 
     protected override void OnEnter()
     {

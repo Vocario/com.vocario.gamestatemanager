@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using Vocario.EventBasedArchitecture;
 
+[Serializable]
 public class Transition : AGameEventListener
 {
     protected AState _from;
