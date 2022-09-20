@@ -47,10 +47,11 @@ public class GSMGraphView : GraphView
         this.AddManipulator(new RectangleSelector());
     }
 
-    internal GSMNode CreateNode(string nodeName, EGSMNodeType type, Vector2 position)
+    internal GSMNode CreateNode(string nodeName, Type type, Vector2 position)
     {
         var nodeType = Type.GetType("GSMNode");
         var node = (GSMNode) Activator.CreateInstance(nodeType);
+        _ = _editorWindow.StateManager.CreateState<UIState>(node);
         node.Init(nodeName, this, position);
         AddNode(node);
         return node;
@@ -91,6 +92,10 @@ public class GSMGraphView : GraphView
             _searchWindow = ScriptableObject.CreateInstance<GSMSearchWindow>();
         }
         _searchWindow.Init(this);
-        nodeCreationRequest = context => SearchWindow.Open(new SearchWindowContext(context.screenMousePosition), _searchWindow);
+        nodeCreationRequest = context =>
+        {
+            var windowContext = new SearchWindowContext(context.screenMousePosition);
+            _ = SearchWindow.Open(windowContext, _searchWindow);
+        };
     }
 }

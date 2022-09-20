@@ -4,16 +4,17 @@ using UnityEngine.UIElements;
 
 public class GSMEditorWindow : EditorWindow
 {
-    [MenuItem("Vocario/Game State Manager Window")]
-    public static void Open() => _ = GetWindow<GSMEditorWindow>("Game State Manager");
+    public StateMachineGraph StateManager;
+
+    public static void Open(StateMachineGraph stateManager)
+    {
+        GSMEditorWindow editorWindow = GetWindow<GSMEditorWindow>("Game State Manager");
+        editorWindow.StateManager = stateManager;
+    }
+
     private GSMGraphView _graphView = null;
 
-    private void OnEnable()
-    {
-        AddGraphView();
-        // AddToolbar();
-        // AddStyles();
-    }
+    private void OnEnable() => AddGraphView();// AddToolbar();// AddStyles();
 
     private void AddGraphView()
     {
