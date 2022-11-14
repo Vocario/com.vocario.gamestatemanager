@@ -1,23 +1,29 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using Vocario.EventBasedArchitecture;
 
 [Serializable]
-public abstract class AState : UnityEngine.Object
+public abstract class AState
 {
-    protected Guid _id = new Guid();
     [SerializeField]
-    protected List<Transition> _transitions = new List<Transition>(1);
+    protected Guid _id = new Guid();
+    [SerializeReference]
+    protected List<AGameEventListener> _transitions;
     protected StateMachine _parent = null;
     public Guid Id => _id;
+    [SerializeField]
     public bool IsInitial = false;
+    [SerializeField]
     public Action OnEnterDelegate = null;
+    [SerializeField]
     public Action OnExitDelegate = null;
 
     protected AState(StateMachine parent)
     {
         _parent = parent;
         _parent.AddState(this);
+        _transitions = new List<AGameEventListener>();
     }
 
     internal bool AddTransition(Transition transition)

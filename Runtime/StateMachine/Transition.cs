@@ -5,9 +5,11 @@ using Vocario.EventBasedArchitecture;
 [Serializable]
 public class Transition : AGameEventListener
 {
+    [SerializeReference, HideInInspector]
     protected AState _from;
+    [SerializeReference, HideInInspector]
     protected AState _to;
-    [field: SerializeField] public bool Active { get; set; } = false;
+    public bool Active = false;
 
     public Transition(GameEvent gameEvent, AState from, AState to) : base(gameEvent)
     {
@@ -21,6 +23,11 @@ public class Transition : AGameEventListener
 
         _ = from.AddTransition(this);
         _ = _gameEvent.Register(this);
+    }
+
+    ~Transition()
+    {
+        Deregister();
     }
 
     public override void RaiseEvent()

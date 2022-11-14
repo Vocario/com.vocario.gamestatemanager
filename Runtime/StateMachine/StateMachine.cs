@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System;
 
 [Serializable]
-[CreateAssetMenu(fileName = "GameStateManager_", menuName = "Scriptable/GameStateManager", order = 11)]
 public class StateMachine
 {
-    [SerializeField]
-    private AState _initialState = null;
+    [SerializeReference]
+    private AState _initialState;
     public AState InitialState
     {
         get => _initialState;
@@ -25,21 +24,20 @@ public class StateMachine
 
     // TODO Possible extra validation?
     public AState CurrentState = null;
-    [SerializeField]
-    private List<AState> _states = new List<AState>();
+    [SerializeReference]
+    private List<AState> _states;
+
+    public StateMachine() => _states = new List<AState>();
 
     public T CreateState<T>() where T : AState
     {
-        var newState = (T) Activator.CreateInstance(typeof(T));
+        var newState = (T) Activator.CreateInstance(typeof(T), new object[] { this });
 
-        Debug.Log($"{typeof(T)}");
-        Debug.Log($"{newState}");
         if (_initialState == null)
         {
             _initialState ??= newState;
             _initialState.IsInitial = true;
         }
-        AddState(newState);
         return newState;
     }
 
@@ -55,6 +53,8 @@ public class StateMachine
     }
 
     public AState GetState(Guid id) => _states.Find(x => x.Id == id);
+
+    public void Clear() => _states.Clear();
 
     public void StartMachine() => _initialState.Enter();
 }

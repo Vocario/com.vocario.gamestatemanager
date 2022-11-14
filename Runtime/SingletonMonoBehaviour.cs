@@ -9,12 +9,19 @@ public class SingletonMonoBehaviour<T> : MonoBehaviour where T : MonoBehaviour
     {
         get
         {
-            if (_instance == null && GameObject.FindObjectOfType<T>() == null)
+            T foundInScene = GameObject.FindObjectOfType<T>();
+
+            if (_instance == null && foundInScene == null)
             {
                 var newObject = new GameObject(typeof(T).Name);
+
                 _instance = newObject.AddComponent<T>();
                 _ = newObject.AddComponent<Canvas>();
                 return _instance;
+            }
+            if (foundInScene != null)
+            {
+                _instance = foundInScene;
             }
             return _instance;
         }
@@ -22,9 +29,9 @@ public class SingletonMonoBehaviour<T> : MonoBehaviour where T : MonoBehaviour
 
     protected virtual void Awake()
     {
-        if (_shouldDestroyOnLoad)
+        if (!_shouldDestroyOnLoad)
         {
-            GameObject.DontDestroyOnLoad(_instance);
+            GameObject.DontDestroyOnLoad(this);
         }
     }
 }
