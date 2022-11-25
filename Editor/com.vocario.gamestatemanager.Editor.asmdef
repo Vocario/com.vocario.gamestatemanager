@@ -1,7 +1,9 @@
 {
     "name": "com.vocario.gamestatemanager.Editor",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:f32ef1479900f5e4896dc8029a75f311"
+    ],
     "includePlatforms": [
         "Editor"
     ],

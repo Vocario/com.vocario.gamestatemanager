@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEditor.Experimental.GraphView;
 using System.Collections.Generic;
+using System;
+using System.Linq;
 
 public class GSMSearchWindow : ScriptableObject, ISearchWindowProvider
 {
@@ -17,59 +19,26 @@ public class GSMSearchWindow : ScriptableObject, ISearchWindowProvider
 
     public List<SearchTreeEntry> CreateSearchTree(SearchWindowContext context)
     {
-        var searchTreeEntries = new List<SearchTreeEntry>()
-        {
-            new SearchTreeGroupEntry(new GUIContent("Create Elements")),
-            new SearchTreeGroupEntry(new GUIContent("Dialogue Nodes"), 1),
-            new SearchTreeEntry(new GUIContent("Single Choice", _indentationIcon))
+        var header = new List<SearchTreeEntry>() { new SearchTreeGroupEntry(new GUIContent("Create Elements")) };
+        IEnumerable<SearchTreeEntry> searchTreeEntries = AppDomain.CurrentDomain
+            .GetAssemblies()
+            .Select(assembly => assembly.GetTypes())
+            .SelectMany(x => x)
+            .Where(type => type.IsSubclassOf(typeof(AState)))
+            .Select(type => new SearchTreeEntry(new GUIContent(type.ToString(), _indentationIcon))
             {
-                userData = "1",
-                level = 2
-            },
-            new SearchTreeEntry(new GUIContent("Multiple Choice", _indentationIcon))
-            {
-                userData = "2",
-                level = 2
-            },
-            new SearchTreeGroupEntry(new GUIContent("Dialogue Groups"), 1),
-            new SearchTreeEntry(new GUIContent("Single Group", _indentationIcon))
-            {
-                userData = new Group(),
-                level = 2
-            }
-        };
-        return searchTreeEntries;
+                userData = type,
+                level = 1
+            });
+
+        return header.Concat(searchTreeEntries).ToList();
     }
 
-    public bool OnSelectEntry(SearchTreeEntry SearchTreeEntry, SearchWindowContext context)
+    public bool OnSelectEntry(SearchTreeEntry searchTreeEntry, SearchWindowContext context)
     {
         Vector2 localMousePosition = _graphView.GetLocalMousePosition(context.screenMousePosition, true);
-
-        switch (SearchTreeEntry.userData)
-        {
-            case "1":
-                {
-                    var singleChoiceNode = (GSMNode) _graphView.CreateNode("DialogueName", EGSMNodeType.SingleChoice, localMousePosition);
-                    _graphView.AddElement(singleChoiceNode);
-                    return true;
-                }
-            case "2":
-                {
-                    var multipleChoiceNode = (GSMNode) _graphView.CreateNode("DialogueName", EGSMNodeType.SingleChoice, localMousePosition);
-                    _graphView.AddElement(multipleChoiceNode);
-                    return true;
-                }
-
-            case Group _:
-                {
-                    // _graphView.CreateGroup("DialogueGroup", localMousePosition);
-
-                    return true;
-                }
-            default:
-                {
-                    return false;
-                }
-        }
+        var singleChoiceNode = (GSMNode) _graphView.CreateNode("DialogueName", (Type) searchTreeEntry.userData, localMousePosition);
+        _graphView.AddElement(singleChoiceNode);
+        return true;
     }
 }
