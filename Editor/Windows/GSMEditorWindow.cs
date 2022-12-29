@@ -4,17 +4,18 @@ using UnityEngine.UIElements;
 
 public class GSMEditorWindow : EditorWindow
 {
-    public StateMachineGraph StateManager;
+    public EventFlowStateMachine StateManager { get; private set; }
 
-    public static void Open(StateMachineGraph stateManager)
+    public static void Open(EventFlowStateMachine stateManager)
     {
-        GSMEditorWindow editorWindow = GetWindow<GSMEditorWindow>("Game State Manager");
+        GSMEditorWindow editorWindow = GetWindow<GSMEditorWindow>("Event Flow State Manager");
         editorWindow.StateManager = stateManager;
+        editorWindow.Init();
     }
 
     private GSMGraphView _graphView = null;
 
-    private void OnEnable() => AddGraphView();// AddToolbar();// AddStyles();
+    public void Init() => AddGraphView();// AddToolbar();// AddStyles();
 
     private void AddGraphView()
     {

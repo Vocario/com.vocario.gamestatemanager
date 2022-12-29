@@ -52,6 +52,7 @@ public class StateMachine
         _states.Add(state);
     }
 
+    // TODO Change list for seializable dictionary for more efficiency
     public AState GetState(Guid id) => _states.Find(x => x.Id == id);
 
     public void Clear() => _states.Clear();

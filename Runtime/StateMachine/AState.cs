@@ -21,6 +21,7 @@ public abstract class AState
 
     protected AState(StateMachine parent)
     {
+        _id = Guid.NewGuid();
         _parent = parent;
         _parent.AddState(this);
         _transitions = new List<AGameEventListener>();

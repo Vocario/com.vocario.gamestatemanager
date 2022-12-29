@@ -19,26 +19,22 @@ public class GSMSearchWindow : ScriptableObject, ISearchWindowProvider
 
     public List<SearchTreeEntry> CreateSearchTree(SearchWindowContext context)
     {
-        var header = new List<SearchTreeEntry>() { new SearchTreeGroupEntry(new GUIContent("Create Elements")) };
-        IEnumerable<SearchTreeEntry> searchTreeEntries = AppDomain.CurrentDomain
-            .GetAssemblies()
-            .Select(assembly => assembly.GetTypes())
-            .SelectMany(x => x)
-            .Where(type => type.IsSubclassOf(typeof(AState)))
-            .Select(type => new SearchTreeEntry(new GUIContent(type.ToString(), _indentationIcon))
+        var header = new List<SearchTreeEntry>()
+        {
+            new SearchTreeGroupEntry(new GUIContent("Create Elements")),
+            new SearchTreeEntry(new GUIContent("New State", _indentationIcon))
             {
-                userData = type,
                 level = 1
-            });
+            }
+        };
 
-        return header.Concat(searchTreeEntries).ToList();
+        return header;
     }
 
     public bool OnSelectEntry(SearchTreeEntry searchTreeEntry, SearchWindowContext context)
     {
         Vector2 localMousePosition = _graphView.GetLocalMousePosition(context.screenMousePosition, true);
-        var singleChoiceNode = (GSMNode) _graphView.CreateNode("DialogueName", (Type) searchTreeEntry.userData, localMousePosition);
-        _graphView.AddElement(singleChoiceNode);
+        _ = _graphView.CreateNode("DialogueName", localMousePosition);
         return true;
     }
 }
