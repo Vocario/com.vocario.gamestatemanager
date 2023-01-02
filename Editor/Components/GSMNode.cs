@@ -10,7 +10,7 @@ public class GSMNode : Node
 {
     public readonly Rect INITIAL_NODE_POSITION = new Rect(100, 200, 100, 150);
 
-    private GSMGraphView _graphView;
+    private GSMEditorWindow _graphWindow;
     private GSMNodeDetails _nodeDetails;
     private Label _titleLabel;
     private TextField _nodeName;
@@ -21,24 +21,26 @@ public class GSMNode : Node
     public bool IsInitial { get; private set; }
     public Port InputPort { get; protected set; } = null;
 
-    public virtual void Init(Guid id, bool isInitial, string nodeName, GSMGraphView graphView, Vector2 position)
-    {
-        ID = id;
-        DialogueName = nodeName;
-        IsInitial = isInitial;
-        name = nodeName;
+    public delegate void OnNodeNameChange();
 
-        _graphView = graphView;
+    public virtual void Init(NodeEditorMetadata nodeData, GSMEditorWindow graphWindow)
+    {
+        ID = nodeData.ID;
+        DialogueName = nodeData.Name;
+        IsInitial = nodeData.IsInitial;
+        name = nodeData.Name;
+
+        _graphWindow = graphWindow;
         _nodeDetails = new GSMNodeDetails();
         // TODO Change to render through polimorphism
-        if (isInitial)
+        if (IsInitial)
         {
             SetPosition(INITIAL_NODE_POSITION);
             RenderAsInitial();
         }
         else
         {
-            SetPosition(new Rect(position, Vector2.zero));
+            SetPosition(new Rect(nodeData.X, nodeData.Y, 0.0f, 0.0f));
             Render();
         }
     }
@@ -123,6 +125,7 @@ public class GSMNode : Node
         titleContainer.Remove(_nodeName);
         title = _nodeName.text;
         name = title;
+        _graphWindow.HasUnsavedChanges = true;
     }
 }
 

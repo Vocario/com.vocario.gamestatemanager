@@ -7,11 +7,11 @@ using Vocario.EventBasedArchitecture;
 public abstract class AState
 {
     [SerializeField]
-    protected Guid _id = new Guid();
+    protected string _id = "";
     [SerializeReference]
     protected List<AGameEventListener> _transitions;
     protected StateMachine _parent = null;
-    public Guid Id => _id;
+    public Guid Id => Guid.Parse(_id);
     [SerializeField]
     public bool IsInitial = false;
     [SerializeField]
@@ -21,7 +21,7 @@ public abstract class AState
 
     protected AState(StateMachine parent)
     {
-        _id = Guid.NewGuid();
+        _id = Guid.NewGuid().ToString();
         _parent = parent;
         _parent.AddState(this);
         _transitions = new List<AGameEventListener>();

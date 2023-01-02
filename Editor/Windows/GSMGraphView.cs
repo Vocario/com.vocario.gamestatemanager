@@ -12,13 +12,12 @@ public class GSMGraphView : GraphView
     private EventFlowStateMachine _stateManager = null;
     private GSMSearchWindow _searchWindow = null;
     private MiniMap _miniMap = null;
-    private Dictionary<Guid, GSMNode> _nodes = new Dictionary<Guid, GSMNode>();
+    public Dictionary<Guid, GSMNode> Nodes { get; private set; } = new Dictionary<Guid, GSMNode>();
 
-    public GSMGraphView(GSMEditorWindow editorWindow)
+    public new class UxmlFactory : UxmlFactory<GSMGraphView, GraphView.UxmlTraits> { }
+
+    public GSMGraphView()
     {
-        _editorWindow = editorWindow;
-        _stateManager = editorWindow.StateManager;
-
         AddManipulators();
         AddGridBackground();
         AddSearchWindow();
@@ -32,6 +31,14 @@ public class GSMGraphView : GraphView
 
         AddStyles();
         // AddMiniMapStyles();
+    }
+
+    public void Init(GSMEditorWindow editorWindow)
+    {
+        _editorWindow = editorWindow;
+        _stateManager = editorWindow.StateManager;
+        // _nodes.Clear();
+
         Load();
     }
 
@@ -47,20 +54,21 @@ public class GSMGraphView : GraphView
         }
         foreach (NodeEditorMetadata nodeData in nodeMetadata)
         {
-            _ = CreateNode(nodeData.ID, nodeData.IsInitial, nodeData.Name, new Vector2(nodeData.X, nodeData.Y));
+            _ = CreateNode(nodeData);
         }
         List<EdgeEditorMetadata> edgeMetadata = _stateManager.Metadata.EdgeMetadata;
 
         foreach (EdgeEditorMetadata edgeData in edgeMetadata)
         {
-            Port port = _nodes[ edgeData.LeftNode ].AddEventOutput();
-            Edge edge = port.ConnectTo(_nodes[ edgeData.RightNode ].InputPort);
+            Port port = Nodes[ edgeData.LeftNode ].AddEventOutput();
+            Edge edge = port.ConnectTo(Nodes[ edgeData.RightNode ].InputPort);
             Add(edge);
         }
     }
 
     private GraphViewChange OnGraphViewChanged(GraphViewChange graphViewChange)
     {
+        _editorWindow.HasUnsavedChanges = true;
         return graphViewChange;
     }
 
@@ -80,19 +88,19 @@ public class GSMGraphView : GraphView
         graphViewChanged = OnGraphViewChanged;
     }
 
-    internal GSMNode CreateNode(Guid id, bool isInitial, string nodeName, Vector2 position)
+    internal GSMNode CreateNode(NodeEditorMetadata nodeData)
     {
         var node = new GSMNode();
-        node.Init(id, isInitial, nodeName, this, position);
+        node.Init(nodeData, _editorWindow);
         AddElement(node);
-        _nodes.Add(id, node);
+        Nodes.Add(nodeData.ID, node);
         return node;
     }
 
     internal GSMNode CreateNode(string name, Vector2 localMousePosition)
     {
-        State state = _stateManager.CreateState(name, localMousePosition.x, localMousePosition.y);
-        return CreateNode(state.Id, state.IsInitial, name, localMousePosition);
+        NodeEditorMetadata data = _stateManager.CreateState(name, localMousePosition.x, localMousePosition.y);
+        return CreateNode(data);
     }
 
     internal Vector2 GetLocalMousePosition(Vector2 mousePosition, bool isSearchWindow = false)

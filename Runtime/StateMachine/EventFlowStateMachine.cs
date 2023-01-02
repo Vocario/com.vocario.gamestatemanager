@@ -15,18 +15,16 @@ public class EventFlowStateMachine : GameEventManager
 
     public void Init() => CreateState();
 
-    public State CreateState()
+    public NodeEditorMetadata CreateState()
     {
         State newState = _stateMachine.CreateState<State>();
-        Metadata.AddNodeMetadata(newState.Id, newState.IsInitial);
-        return newState;
+        return Metadata.AddNodeMetadata(newState.Id, newState.IsInitial);
     }
 
-    public State CreateState(string name, float x, float y)
+    public NodeEditorMetadata CreateState(string name, float x, float y)
     {
         State newState = _stateMachine.CreateState<State>();
-        Metadata.AddNodeMetadata(newState.Id, newState.IsInitial, name, x, y);
-        return newState;
+        return Metadata.AddNodeMetadata(newState.Id, newState.IsInitial, name, x, y);
     }
 #endif
 }
@@ -48,20 +46,42 @@ public class EventFlowStateMachineEditorMetadata
     [field: SerializeField]
     public List<EdgeEditorMetadata> EdgeMetadata { get; private set; } = new List<EdgeEditorMetadata>();
 
-    public void AddNodeMetadata(Guid id, bool isInitial, string name = "Start", float x = 0, float y = 0) => NodeMetadata.Add(new NodeEditorMetadata()
+    public NodeEditorMetadata AddNodeMetadata(Guid id, bool isInitial, string name = "Start", float x = 0, float y = 0)
     {
-        ID = id,
-        IsInitial = isInitial,
-        Name = name,
-        X = x,
-        Y = y
-    });
+        var data = new NodeEditorMetadata()
+        {
+            ID = id,
+            IsInitial = isInitial,
+            Name = name,
+            X = x,
+            Y = y
+        };
+        NodeMetadata.Add(data);
+
+        return data;
+    }
+
+    public void UpdateNodeMetadata(Guid id, bool? isInitial, string name, float x, float y)
+    {
+        NodeEditorMetadata data = NodeMetadata.Find(x => x.ID == id);
+        data.ID = id;
+        data.IsInitial = isInitial ?? data.IsInitial;
+        data.Name = name;
+        data.X = x;
+        data.Y = y;
+    }
 }
 
 [Serializable]
-public struct NodeEditorMetadata
+public class NodeEditorMetadata
 {
-    public Guid ID;
+    [SerializeField]
+    private string _id;
+    public Guid ID
+    {
+        get => Guid.Parse(_id);
+        set => _id = value.ToString();
+    }
     public bool IsInitial;
     public string Name;
     public float X;
@@ -69,7 +89,7 @@ public struct NodeEditorMetadata
 }
 
 [Serializable]
-public struct EdgeEditorMetadata
+public class EdgeEditorMetadata
 {
     public Enum EventName;
     public Guid RightNode;
