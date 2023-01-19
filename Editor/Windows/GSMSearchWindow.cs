@@ -1,8 +1,6 @@
 using UnityEngine;
 using UnityEditor.Experimental.GraphView;
 using System.Collections.Generic;
-using System;
-using System.Linq;
 
 public class GSMSearchWindow : ScriptableObject, ISearchWindowProvider
 {

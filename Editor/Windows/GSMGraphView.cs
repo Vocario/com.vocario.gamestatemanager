@@ -1,4 +1,5 @@
 using UnityEngine.UIElements;
+using UnityEditor.UIElements;
 using UnityEditor.Experimental.GraphView;
 using System;
 using UnityEditor;
@@ -8,11 +9,11 @@ using System.Linq;
 
 public class GSMGraphView : GraphView
 {
-    private GSMEditorWindow _editorWindow = null;
-    private EventFlowStateMachine _stateManager = null;
     private GSMSearchWindow _searchWindow = null;
     private MiniMap _miniMap = null;
-    public Dictionary<Guid, GSMNode> Nodes { get; private set; } = new Dictionary<Guid, GSMNode>();
+    private GSMEditorWindow.GraphViewDependencies _dependencies;
+
+    internal Dictionary<Guid, GSMNode> Nodes { get; private set; } = new Dictionary<Guid, GSMNode>();
 
     public new class UxmlFactory : UxmlFactory<GSMGraphView, GraphView.UxmlTraits> { }
 
@@ -23,54 +24,13 @@ public class GSMGraphView : GraphView
         AddSearchWindow();
         // AddMiniMap();
 
-        // OnElementsDeleted();
-        // OnGroupElementsAdded();
-        // OnGroupElementsRemoved();
-        // OnGroupRenamed();
-        // OnGraphViewChanged();
-
         AddStyles();
         // AddMiniMapStyles();
     }
 
-    public void Init(GSMEditorWindow editorWindow)
-    {
-        _editorWindow = editorWindow;
-        _stateManager = editorWindow.StateManager;
-        // _nodes.Clear();
+    internal void Init(GSMEditorWindow.GraphViewDependencies dependencies) => _dependencies = dependencies;
 
-        Load();
-    }
-
-    private void Load()
-    {
-
-        List<NodeEditorMetadata> nodeMetadata = _stateManager.Metadata.NodeMetadata;
-
-        if (nodeMetadata == null || nodeMetadata.Count == 0)
-        {
-            // TODO Remove requirement to init on first open, or open upon creation?
-            _stateManager.Init();
-        }
-        foreach (NodeEditorMetadata nodeData in nodeMetadata)
-        {
-            _ = CreateNode(nodeData);
-        }
-        List<EdgeEditorMetadata> edgeMetadata = _stateManager.Metadata.EdgeMetadata;
-
-        foreach (EdgeEditorMetadata edgeData in edgeMetadata)
-        {
-            Port port = Nodes[ edgeData.LeftNode ].AddEventOutput();
-            Edge edge = port.ConnectTo(Nodes[ edgeData.RightNode ].InputPort);
-            Add(edge);
-        }
-    }
-
-    private GraphViewChange OnGraphViewChanged(GraphViewChange graphViewChange)
-    {
-        _editorWindow.HasUnsavedChanges = true;
-        return graphViewChange;
-    }
+    private GraphViewChange OnGraphViewChanged(GraphViewChange graphViewChange) => graphViewChange;
 
     public override List<Port> GetCompatiblePorts(Port startPort, NodeAdapter nodeAdapter) => ports
             .ToList()
@@ -88,28 +48,23 @@ public class GSMGraphView : GraphView
         graphViewChanged = OnGraphViewChanged;
     }
 
-    internal GSMNode CreateNode(NodeEditorMetadata nodeData)
+    internal Vector2 GetLocalMousePosition(Vector2 mousePosition, bool isSearchWindow = false)
     {
-        var node = new GSMNode();
-        node.Init(nodeData, _editorWindow);
-        AddElement(node);
-        Nodes.Add(nodeData.ID, node);
-        return node;
+        GSMEditorWindow editorWindow = EditorWindow.GetWindow<GSMEditorWindow>("Event Flow State Manager");
+        Vector2 worldMousePosition = isSearchWindow
+            ? editorWindow.rootVisualElement.ChangeCoordinatesTo(editorWindow.rootVisualElement.parent, mousePosition - editorWindow.position.position)
+            : mousePosition;
+        Vector2 localMousePosition = contentViewContainer.WorldToLocal(worldMousePosition);
+        return localMousePosition;
     }
 
     internal GSMNode CreateNode(string name, Vector2 localMousePosition)
     {
-        NodeEditorMetadata data = _stateManager.CreateState(name, localMousePosition.x, localMousePosition.y);
-        return CreateNode(data);
-    }
-
-    internal Vector2 GetLocalMousePosition(Vector2 mousePosition, bool isSearchWindow = false)
-    {
-        Vector2 worldMousePosition = isSearchWindow
-            ? _editorWindow.rootVisualElement.ChangeCoordinatesTo(_editorWindow.rootVisualElement.parent, mousePosition - _editorWindow.position.position)
-            : mousePosition;
-        Vector2 localMousePosition = contentViewContainer.WorldToLocal(worldMousePosition);
-        return localMousePosition;
+        var node = new GSMNode();
+        node.Init(name, localMousePosition.x, localMousePosition.y, false, _dependencies.EventInfo);
+        AddElement(node);
+        Nodes.Add(node.ID, node);
+        return node;
     }
 
     private void AddGridBackground()

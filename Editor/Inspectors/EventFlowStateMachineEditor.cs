@@ -1,9 +1,8 @@
+using Vocario.EventBasedArchitecture;
 using UnityEngine;
 
-// TODO Move to editor definition
-
-[UnityEditor.CustomEditor(typeof(EventFlowStateMachine), editorForChildClasses: true)]
-public class EventFlowStateMachineEditor : UnityEditor.Editor
+[UnityEditor.CustomEditor(typeof(EventFlowStateMachine))]
+public class EventFlowStateMachineEditor : GameEventManagerEditor
 {
     public override void OnInspectorGUI()
     {

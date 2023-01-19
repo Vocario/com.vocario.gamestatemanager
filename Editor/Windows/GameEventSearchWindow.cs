@@ -4,21 +4,28 @@ using System.Collections.Generic;
 using System.Linq;
 using System;
 using UnityEditor;
+using Vocario.EventBasedArchitecture;
 
 public class GameEventSearchWindow : ScriptableObject, ISearchWindowProvider
 {
+    private List<GSMEditorWindow.EventInfo> _eventInfo = null;
+    private Action<int> _onSelectionCallback = null;
+
+    internal void Init(List<GSMEditorWindow.EventInfo> eventInfo, Action<int> onSelectionCallback)
+    {
+        _eventInfo = eventInfo;
+        _onSelectionCallback = onSelectionCallback;
+    }
+
     // TODO Cache and refetch on change
+    // TODO Only add events that are not handled on the state already
     public List<SearchTreeEntry> CreateSearchTree(SearchWindowContext context)
     {
         var header = new List<SearchTreeEntry>() { new SearchTreeGroupEntry(new GUIContent("State Behaviours")) };
-        IEnumerable<SearchTreeEntry> searchTreeEntries = AppDomain.CurrentDomain
-            .GetAssemblies()
-            .Select(assembly => assembly.GetTypes())
-            .SelectMany(x => x)
-            .Where(type => type.IsSubclassOf(typeof(AStateBehaviour)))
-            .Select(type => new SearchTreeEntry(new GUIContent(type.ToString(), EditorGUIUtility.FindTexture("d_cs Script Icon")))
+        IEnumerable<SearchTreeEntry> searchTreeEntries = _eventInfo
+            .Select(eventInfo => new SearchTreeEntry(new GUIContent(eventInfo.Name, EditorGUIUtility.FindTexture("d_cs Script Icon")))
             {
-                userData = type,
+                userData = eventInfo.EnumId,
                 level = 1
             });
 
@@ -27,6 +34,8 @@ public class GameEventSearchWindow : ScriptableObject, ISearchWindowProvider
 
     public bool OnSelectEntry(SearchTreeEntry searchTreeEntry, SearchWindowContext context)
     {
+        _onSelectionCallback?.Invoke((int) searchTreeEntry.userData);
         return true;
     }
+
 }

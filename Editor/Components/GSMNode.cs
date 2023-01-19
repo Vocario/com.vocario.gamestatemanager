@@ -2,15 +2,13 @@ using UnityEngine;
 using UnityEditor.Experimental.GraphView;
 using System;
 using UnityEngine.UIElements;
-using UnityEditor.UIElements;
-using Vocario.EventBasedArchitecture;
 using UnityEditor;
+using System.Collections.Generic;
 
 public class GSMNode : Node
 {
     public readonly Rect INITIAL_NODE_POSITION = new Rect(100, 200, 100, 150);
-
-    private GSMEditorWindow _graphWindow;
+    private List<GSMEditorWindow.EventInfo> _eventInfo;
     private GSMNodeDetails _nodeDetails;
     private Label _titleLabel;
     private TextField _nodeName;
@@ -21,26 +19,21 @@ public class GSMNode : Node
     public bool IsInitial { get; private set; }
     public Port InputPort { get; protected set; } = null;
 
-    public delegate void OnNodeNameChange();
-
-    public virtual void Init(NodeEditorMetadata nodeData, GSMEditorWindow graphWindow)
+    public virtual void Init(string name, float x, float y, bool isInitial, List<GSMEditorWindow.EventInfo> eventInfo)
     {
-        ID = nodeData.ID;
-        DialogueName = nodeData.Name;
-        IsInitial = nodeData.IsInitial;
-        name = nodeData.Name;
-
-        _graphWindow = graphWindow;
+        ID = Guid.NewGuid();
+        title = name;
+        _eventInfo = eventInfo;
         _nodeDetails = new GSMNodeDetails();
         // TODO Change to render through polimorphism
-        if (IsInitial)
+        if (isInitial)
         {
             SetPosition(INITIAL_NODE_POSITION);
             RenderAsInitial();
         }
         else
         {
-            SetPosition(new Rect(nodeData.X, nodeData.Y, 0.0f, 0.0f));
+            SetPosition(new Rect(x, y, 0.0f, 0.0f));
             Render();
         }
     }
@@ -49,21 +42,17 @@ public class GSMNode : Node
     {
         Vector2 nodePosition = this.ChangeCoordinatesTo(contentContainer, evt.localMousePosition);
 
-        evt.menu.AppendAction("Add event", a => AddEventOutput());
+        evt.menu.AppendAction("Add event", a => CreateEventOutput());
     }
 
-    public Port AddEventOutput(GameEvent gameEvent = null)
+    public Port CreateEventOutput()
     {
         Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(PortSource<Transition>));
         Label portLabel = outputPort.contentContainer.Q<Label>("type");
 
         portLabel.text = "";
-        var objectField = new ObjectField
-        {
-            objectType = typeof(GameEvent)
-        };
-        objectField.style.width = 150.0f;
-        outputPort.contentContainer.Add(objectField);
+        var gameEventSelector = new GameEventSelector(_eventInfo);
+        outputPort.contentContainer.Add(gameEventSelector);
         var deleteButton = new Button(() => outputContainer.Remove(outputPort))
         {
             text = "X"
@@ -125,14 +114,14 @@ public class GSMNode : Node
         titleContainer.Remove(_nodeName);
         title = _nodeName.text;
         name = title;
-        _graphWindow.HasUnsavedChanges = true;
     }
 }
 
 public class GSMNodeDetails : VisualElement
 {
     private Button _addButton = null;
-    private GameEventSearchWindow _searchWindow = null;
+    private VisualElement _container = null;
+    private StateBehaviourSearchWindow _searchWindow = null;
 
     public new class UxmlFactory : UxmlFactory<GSMNodeDetails, VisualElement.UxmlTraits> { }
 
@@ -142,6 +131,7 @@ public class GSMNodeDetails : VisualElement
     {
         VisualTreeAsset visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/com.vocario.gamestatemanager/Editor/Resources/GSMNodeDetails.uxml");
         visualTree.CloneTree(this);
+        _container = this.Q<VisualElement>("behaviour-list");
         _addButton = this.Q<Button>("add-button");
         _addButton.clickable.clicked += OpenStateBehaviourSearchWindow;
     }
@@ -155,10 +145,91 @@ public class GSMNodeDetails : VisualElement
     {
         if (_searchWindow == null)
         {
+            _searchWindow = ScriptableObject.CreateInstance<StateBehaviourSearchWindow>();
+        }
+        _searchWindow.Init(AddNewItem);
+        var windowContext = new SearchWindowContext(GUIUtility.GUIToScreenPoint(Event.current.mousePosition));
+        _ = SearchWindow.Open(windowContext, _searchWindow);
+    }
+
+    private void AddNewItem(string name)
+    {
+        var newItem = new StateBehaviourItem(name, RemoveItem);
+        _container.Add(newItem);
+    }
+
+    private void RemoveItem(StateBehaviourItem item) => _container.Remove(item);
+}
+
+public class GameEventSelector : VisualElement
+{
+    public const string DEFAULT_LABEL = "None (Game Event)";
+    private List<GSMEditorWindow.EventInfo> _eventInfo = null;
+    private Button _addButton = null;
+    private VisualElement _imageElement = null;
+    private Label _label = null;
+    private GameEventSearchWindow _searchWindow = null;
+
+    public GameEventSelector(List<GSMEditorWindow.EventInfo> eventInfo) : base()
+    {
+        VisualTreeAsset visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/com.vocario.gamestatemanager/Editor/Resources/GameEventSelector.uxml");
+
+        visualTree.CloneTree(this);
+        _eventInfo = eventInfo;
+        _addButton = this.Q<Button>("game-event-field-selector");
+        _imageElement = this.Q<VisualElement>("image");
+        _label = this.Q<Label>("label");
+        style.width = 150.0f;
+        _label.text = DEFAULT_LABEL;
+        _addButton.clicked += OpenGameEventSearchWindow;
+    }
+
+    ~GameEventSelector()
+    {
+        _addButton.clicked -= OpenGameEventSearchWindow;
+    }
+
+    private void UpdateValue(int value)
+    {
+        if (value < 0)
+        {
+            _imageElement.style.backgroundImage = null;
+            _label.text = DEFAULT_LABEL;
+            return;
+        }
+
+        _imageElement.style.backgroundImage = EditorGUIUtility.FindTexture("d_cs Script Icon");
+        _label.text = _eventInfo[ value ].Name;
+
+    }
+
+    private void OpenGameEventSearchWindow()
+    {
+        if (_searchWindow == null)
+        {
             _searchWindow = ScriptableObject.CreateInstance<GameEventSearchWindow>();
         }
-        var windowContext = new SearchWindowContext(Event.current.mousePosition);
+        _searchWindow.Init(_eventInfo, UpdateValue);
+        var windowContext = new SearchWindowContext(GUIUtility.GUIToScreenPoint(Event.current.mousePosition));
         _ = SearchWindow.Open(windowContext, _searchWindow);
+    }
+}
+
+public class StateBehaviourItem : VisualElement
+{
+    private Button _removeButton = null;
+    private Label _label = null;
+
+    public StateBehaviourItem(string name, Action<StateBehaviourItem> removeItem) : base()
+    {
+        VisualTreeAsset visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/com.vocario.gamestatemanager/Editor/Resources/NodeBehaviourItem.uxml");
+
+        visualTree.CloneTree(this);
+        _removeButton = this.Q<Button>("remove-button");
+        _label = this.Q<Label>("name");
+
+        _label.text = name;
+        _removeButton.clicked += () => removeItem(this);
     }
 }
 
