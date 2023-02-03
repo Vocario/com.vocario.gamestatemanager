@@ -3,13 +3,14 @@ using UnityEngine.UIElements;
 using UnityEngine;
 using UnityEditor.UIElements;
 using System.Collections.Generic;
+using Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor;
 
 public class GSMEditorWindow : EditorWindow
 {
-    public EventFlowStateMachine StateManager { get; private set; } = null;
-    public bool HasUnsavedChanges { get => hasUnsavedChanges; set => hasUnsavedChanges = value; }
+    private EventFlowStateMachine _stateManager = null;
     private GSMGraphView _graphView = null;
     private ToolbarButton _saveButton = null;
+    private ChangeManager _changeManager = null;
 
     public static void Open(EventFlowStateMachine stateManager)
     {
@@ -21,20 +22,20 @@ public class GSMEditorWindow : EditorWindow
     private void Init(EventFlowStateMachine stateManager)
     {
         VisualElement root = rootVisualElement;
-        StateManager = stateManager;
+        _stateManager = stateManager;
 
         _graphView = root.Q<GSMGraphView>();
 
-        var something = new List<EventInfo>();
-        foreach (KeyValuePair<int, Vocario.EventBasedArchitecture.GameEvent> item in StateManager.Events)
+        var eventInfo = new List<EventInfo>();
+        foreach (KeyValuePair<int, Vocario.EventBasedArchitecture.GameEvent> item in stateManager.Events)
         {
-            something.Add(new EventInfo() { EnumId = item.Key, Name = item.Value.Name });
+            eventInfo.Add(new EventInfo() { EnumId = item.Key, Name = item.Value.Name });
         }
+        _changeManager = new ChangeManager(() => hasUnsavedChanges = true, () => hasUnsavedChanges = false);
+        var nodeController = new NodeController(_changeManager, _stateManager.NodeData);
+        var portController = new PortController(_changeManager, _stateManager.NodeData);
 
-        var dependencies = new GraphViewDependencies()
-        {
-            EventInfo = something
-        };
+        var dependencies = new GraphViewDependencies(eventInfo, nodeController, portController);
         _graphView.Init(dependencies);
 
         _saveButton = root.Q<ToolbarButton>();
@@ -48,14 +49,204 @@ public class GSMEditorWindow : EditorWindow
         visualTree.CloneTree(root);
     }
 
-    public class GraphViewDependencies
+    public override void SaveChanges()
     {
-        public List<EventInfo> EventInfo;
+        base.SaveChanges();
+        _changeManager.Commit();
+    }
+}
+
+public class GraphViewDependencies
+{
+    public List<EventInfo> EventInfo { get; private set; }
+    public NodeController NodeController { get; private set; }
+    public PortController PortController { get; private set; }
+
+    public GraphViewDependencies(List<EventInfo> eventInfo, NodeController nodeController, PortController portController)
+    {
+        EventInfo = eventInfo;
+        NodeController = nodeController;
+        PortController = portController;
+    }
+}
+
+public class EventInfo
+{
+    public int EnumId = -1;
+    public string Name = "Invalid";
+}
+
+public class ChangeManager
+{
+    // TODO Change to delegate
+    private System.Action _onChangeAdded;
+    private System.Action _onChangesCommited;
+    private Queue<APendingChanges> _changesQueue = new Queue<APendingChanges>();
+
+    internal ChangeManager(System.Action OnChangeAdded, System.Action OnChangesCommited)
+    {
+        _onChangeAdded = OnChangeAdded;
+        _onChangesCommited = OnChangesCommited;
     }
 
-    public class EventInfo
+    internal void Commit()
     {
-        public int EnumId = -1;
-        public string Name = "Invalid";
+        while (_changesQueue.Count > 0)
+        {
+            APendingChanges change = _changesQueue.Dequeue();
+            change.Commit();
+        }
+        _onChangesCommited?.Invoke();
+    }
+
+    internal void AddChange(APendingChanges change)
+    {
+        _changesQueue.Enqueue(change);
+        _onChangeAdded?.Invoke();
+    }
+}
+
+namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor
+{
+    using Model;
+    using System;
+
+    public class NodeController
+    {
+        private ChangeManager _changeManager = null;
+        private List<Node> _nodeData = null;
+
+        public NodeController(ChangeManager changeManager, List<Node> nodeData)
+        {
+            _changeManager = changeManager;
+            _nodeData = nodeData;
+        }
+
+        internal void Create(Guid id, string name, float x, float y, bool isInitial)
+        {
+            var change = new CreateNodePendingChanges()
+            {
+                SavedData = _nodeData,
+                Data = new Node()
+                {
+                    GraphId = id,
+                    Name = name,
+                    X = x,
+                    Y = y,
+                    IsInitial = isInitial
+                },
+            };
+            _changeManager.AddChange(change);
+        }
+
+        internal void Update(Guid id, string name, float x, float y, bool isInitial)
+        {
+            var change = new UpdateNodePendingChanges()
+            {
+                SavedData = _nodeData,
+                Id = id,
+                Name = name,
+                X = x,
+                Y = y,
+                IsInitial = isInitial
+            };
+            _changeManager.AddChange(change);
+        }
+
+        internal void Remove(Guid id)
+        {
+            var change = new RemoveNodePendingChanges()
+            {
+                SavedData = _nodeData,
+                Id = id
+            };
+            _changeManager.AddChange(change);
+        }
+
+        internal Node[] GetAll() => _nodeData.ToArray();
+    }
+
+    public class PortController
+    {
+        private ChangeManager _changeManager = null;
+        private List<Node> _nodeData = null;
+
+        public PortController(ChangeManager changeManager, List<Node> nodeData)
+        {
+            _changeManager = changeManager;
+            _nodeData = nodeData;
+        }
+
+        internal void Create(Guid id, Guid nodeId, int index)
+        {
+            var change = new CreatePortPendingChanges()
+            {
+                NodeId = nodeId,
+                SavedData = _nodeData,
+                Data = new Port()
+                {
+                    ID = id,
+                    Index = index
+                },
+            };
+            _changeManager.AddChange(change);
+        }
+
+        internal void Update(Guid id, Guid nodeId, int index)
+        {
+            var change = new UpdatePortPendingChanges()
+            {
+                SavedData = _nodeData,
+                Id = id,
+                NodeId = nodeId,
+                Index = index
+            };
+            _changeManager.AddChange(change);
+        }
+
+        internal void Remove(Guid id, Guid nodeId)
+        {
+            var change = new RemovePortPendingChanges()
+            {
+                SavedData = _nodeData,
+                Id = id,
+                NodeId = nodeId
+            };
+            _changeManager.AddChange(change);
+        }
+    }
+
+    public class StateBehaviourController
+    {
+        private ChangeManager _changeManager = null;
+        private List<Node> _nodeData = null;
+
+        public StateBehaviourController(ChangeManager changeManager, List<Node> nodeData)
+        {
+            _changeManager = changeManager;
+            _nodeData = nodeData;
+        }
+
+        internal void Create(Guid nodeId, string typeName)
+        {
+            var change = new CreateStateBehaviourPendingChanges()
+            {
+                NodeId = nodeId,
+                SavedData = _nodeData,
+                StateBehaviourType = typeName
+            };
+            _changeManager.AddChange(change);
+        }
+
+        internal void Remove(Guid nodeId, string typeName)
+        {
+            var change = new RemoveStateBehaviourPendingChanges()
+            {
+                SavedData = _nodeData,
+                NodeId = nodeId,
+                StateBehaviourType = typeName
+            };
+            _changeManager.AddChange(change);
+        }
     }
 }

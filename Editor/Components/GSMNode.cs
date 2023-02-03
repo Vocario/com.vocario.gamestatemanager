@@ -4,11 +4,15 @@ using System;
 using UnityEngine.UIElements;
 using UnityEditor;
 using System.Collections.Generic;
+using Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor;
+using PortModel = Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor.Model.Port;
 
 public class GSMNode : Node
 {
     public readonly Rect INITIAL_NODE_POSITION = new Rect(100, 200, 100, 150);
-    private List<GSMEditorWindow.EventInfo> _eventInfo;
+    private List<EventInfo> _eventInfo;
+    private NodeController _nodeController;
+    private PortController _portController;
     private GSMNodeDetails _nodeDetails;
     private Label _titleLabel;
     private TextField _nodeName;
@@ -19,12 +23,19 @@ public class GSMNode : Node
     public bool IsInitial { get; private set; }
     public Port InputPort { get; protected set; } = null;
 
-    public virtual void Init(string name, float x, float y, bool isInitial, List<GSMEditorWindow.EventInfo> eventInfo)
+    public virtual void Init(Guid? id, string name, float x, float y, bool isInitial, List<EventInfo> eventInfo, List<PortModel> ports, NodeController nodeController, PortController portController)
     {
-        ID = Guid.NewGuid();
+        ID = id ?? Guid.NewGuid();
         title = name;
+        this.name = name;
         _eventInfo = eventInfo;
+        _nodeController = nodeController;
+        _portController = portController;
         _nodeDetails = new GSMNodeDetails();
+        foreach (PortModel port in ports)
+        {
+            _ = CreateEventOutput(port.ID, port.Index);
+        }
         // TODO Change to render through polimorphism
         if (isInitial)
         {
@@ -45,15 +56,16 @@ public class GSMNode : Node
         evt.menu.AppendAction("Add event", a => CreateEventOutput());
     }
 
+    // TODO Remove code repetition
     public Port CreateEventOutput()
     {
         Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(PortSource<Transition>));
         Label portLabel = outputPort.contentContainer.Q<Label>("type");
 
         portLabel.text = "";
-        var gameEventSelector = new GameEventSelector(_eventInfo);
+        var gameEventSelector = new GameEventSelector(null, null, ID, _eventInfo, _portController.Create, _portController.Update);
         outputPort.contentContainer.Add(gameEventSelector);
-        var deleteButton = new Button(() => outputContainer.Remove(outputPort))
+        var deleteButton = new Button(() => RemovePort(gameEventSelector.Id, outputPort))
         {
             text = "X"
         };
@@ -62,6 +74,33 @@ public class GSMNode : Node
         RefreshExpandedState();
         _ = RefreshPorts();
         return outputPort;
+    }
+
+    public Port CreateEventOutput(Guid id, int index)
+    {
+        Port outputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(PortSource<Transition>));
+        Label portLabel = outputPort.contentContainer.Q<Label>("type");
+
+        portLabel.text = "";
+        var gameEventSelector = new GameEventSelector(id, index, ID, _eventInfo, _portController.Create, _portController.Update);
+        outputPort.contentContainer.Add(gameEventSelector);
+        var deleteButton = new Button(() => RemovePort(gameEventSelector.Id, outputPort))
+        {
+            text = "X"
+        };
+        outputPort.contentContainer.Add(deleteButton);
+        outputContainer.Add(outputPort);
+        RefreshExpandedState();
+        _ = RefreshPorts();
+        return outputPort;
+    }
+
+    public void RemovePort(Guid selectorId, Port outputPort)
+    {
+        outputContainer.Remove(outputPort);
+        RefreshExpandedState();
+        _ = RefreshPorts();
+        _portController.Remove(selectorId, ID);
     }
 
     private void RenderAsInitial()
@@ -114,6 +153,8 @@ public class GSMNode : Node
         titleContainer.Remove(_nodeName);
         title = _nodeName.text;
         name = title;
+        Rect position = GetPosition();
+        _nodeController.Update(ID, name, position.x, position.y, IsInitial);
     }
 }
 
@@ -164,14 +205,28 @@ public class GSMNodeDetails : VisualElement
 public class GameEventSelector : VisualElement
 {
     public const string DEFAULT_LABEL = "None (Game Event)";
-    private List<GSMEditorWindow.EventInfo> _eventInfo = null;
+    private List<EventInfo> _eventInfo = null;
     private Button _addButton = null;
     private VisualElement _imageElement = null;
     private Label _label = null;
     private GameEventSearchWindow _searchWindow = null;
+    private Guid _nodeId;
+    private Action<Guid, Guid, int> _onCreate;
+    private Action<Guid, Guid, int> _onUpdate;
+    private Guid _id;
+    public Guid Id => _id;
 
-    public GameEventSelector(List<GSMEditorWindow.EventInfo> eventInfo) : base()
+    public GameEventSelector(Guid? id, int? index, Guid nodeId, List<EventInfo> eventInfo, Action<Guid, Guid, int> onCreate, Action<Guid, Guid, int> onUpdate) : base()
     {
+        _id = id ?? Guid.NewGuid();
+        _nodeId = nodeId;
+        _onCreate = onCreate;
+        _onUpdate = onUpdate;
+        if (!id.HasValue)
+        {
+            _onCreate?.Invoke(_id, nodeId, -1);
+        }
+
         VisualTreeAsset visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/com.vocario.gamestatemanager/Editor/Resources/GameEventSelector.uxml");
 
         visualTree.CloneTree(this);
@@ -182,6 +237,10 @@ public class GameEventSelector : VisualElement
         style.width = 150.0f;
         _label.text = DEFAULT_LABEL;
         _addButton.clicked += OpenGameEventSearchWindow;
+        if (index.HasValue)
+        {
+            UpdateValue(index.Value);
+        }
     }
 
     ~GameEventSelector()
@@ -200,6 +259,7 @@ public class GameEventSelector : VisualElement
 
         _imageElement.style.backgroundImage = EditorGUIUtility.FindTexture("d_cs Script Icon");
         _label.text = _eventInfo[ value ].Name;
+        _onUpdate?.Invoke(_id, _nodeId, value);
 
     }
 

@@ -9,6 +9,10 @@ public class EventFlowStateMachine : GameEventManager
 {
     [SerializeField]
     private StateMachine _stateMachine;
+
+#if UNITY_EDITOR
+    public List<Node> NodeData;
+#endif
 }
 
 public class State : AState
@@ -29,71 +33,143 @@ public class CreateNodePendingChanges : APendingChanges
     public override void Commit() => SavedData.Add(Data);
 }
 
-public class RemoveNodePendingChanges : APendingChanges
+public class UpdateNodePendingChanges : APendingChanges
 {
-    public Node Data = null;
+    public Guid Id;
+    public string Name;
+    public float X;
+    public float Y;
+    public bool IsInitial;
     public List<Node> SavedData = null;
-
-    public override void Commit() => SavedData.Remove(Data);
-}
-
-public class MoveNodePendingChanges : APendingChanges
-{
-    public Node Data = null;
-    public float DeltaX = 0.0f;
-    public float DeltaY = 0.0f;
 
     public override void Commit()
     {
-        Data.X += DeltaX;
-        Data.Y += DeltaY;
+        Node nodeData = SavedData.Find(SearchClause);
+        if (nodeData != null)
+        {
+            nodeData.Name = Name;
+            nodeData.X = X;
+            nodeData.Y = Y;
+            nodeData.IsInitial = IsInitial;
+        }
     }
+
+    private bool SearchClause(Node node) => node.GraphId == Id;
 }
 
-public class RenameNodePendingChanges : APendingChanges
+public class RemoveNodePendingChanges : APendingChanges
 {
-    public Node Data = null;
-    public string OldName = "";
-    public string NewName = "";
+    public Guid Id;
+    public List<Node> SavedData = null;
 
-    public override void Commit() => Data.Name = NewName;
+    public override void Commit()
+    {
+        Node nodeData = SavedData.Find(SearchClause);
+        if (nodeData != null)
+        {
+            _ = SavedData.Remove(nodeData);
+        }
+    }
+
+    private bool SearchClause(Node node) => node.GraphId == Id;
 }
 
-public class AddStateBehaviourPendingChanges : APendingChanges
+public class CreateStateBehaviourPendingChanges : APendingChanges
 {
-    public Node Data = null;
+    public Guid NodeId;
+    public List<Node> SavedData;
     public string StateBehaviourType = "";
 
-    public override void Commit() => Data.StateBehaviourTypes.Add(StateBehaviourType);
+    public override void Commit()
+    {
+        Node nodeData = SavedData.Find(SearchClause);
+        nodeData?.StateBehaviourTypes.Add(StateBehaviourType);
+    }
+
+    private bool SearchClause(Node node) => node.GraphId == NodeId;
 }
 
 public class RemoveStateBehaviourPendingChanges : APendingChanges
 {
-    public Node Data = null;
+    public Guid NodeId;
+    public List<Node> SavedData;
     public string StateBehaviourType = "";
-
-    public override void Commit() => Data.StateBehaviourTypes.Remove(StateBehaviourType);
-}
-
-public class AddOutputPendingChanges : APendingChanges
-{
-    public Node Data = null;
-    public Port NewPort = null;
-
-    public override void Commit() => Data.Ports.Add(NewPort);
-}
-
-public class UpdateOutputPendingChanges : APendingChanges
-{
-    public Port Port = null;
-    public string Name = null;
-    public int? Index = null;
 
     public override void Commit()
     {
-        Port.Name = Name ?? Port.Name;
-        Port.Index = Index ?? Port.Index;
+        Node nodeData = SavedData.Find(SearchClause);
+        _ = (nodeData?.StateBehaviourTypes.Remove(StateBehaviourType));
     }
+
+    private bool SearchClause(Node node) => node.GraphId == NodeId;
+}
+
+public class CreatePortPendingChanges : APendingChanges
+{
+    public Guid NodeId;
+    public List<Node> SavedData = null;
+    public Port Data = null;
+
+    public override void Commit()
+    {
+        Node nodeData = SavedData.Find(SearchClause);
+        nodeData.Ports.Add(Data);
+    }
+
+    private bool SearchClause(Node node) => node.GraphId == NodeId;
+}
+
+public class UpdatePortPendingChanges : APendingChanges
+{
+    public List<Node> SavedData = null;
+    public Guid Id;
+    public Guid NodeId;
+    public int Index = -1;
+
+    public override void Commit()
+    {
+        Node nodeData = SavedData.Find(NodeSearchClause);
+        if (nodeData == null)
+        {
+            return;
+        }
+
+        Port portData = nodeData.Ports.Find(PortSearchClause);
+        if (portData == null)
+        {
+            return;
+        }
+        portData.Index = Index;
+    }
+
+    private bool NodeSearchClause(Node node) => node.GraphId == NodeId;
+    private bool PortSearchClause(Port port) => port.ID == Id;
+}
+
+public class RemovePortPendingChanges : APendingChanges
+{
+    public List<Node> SavedData = null;
+    public Guid Id;
+    public Guid NodeId;
+
+    public override void Commit()
+    {
+        Node nodeData = SavedData.Find(NodeSearchClause);
+        if (nodeData == null)
+        {
+            return;
+        }
+
+        Port portData = nodeData.Ports.Find(PortSearchClause);
+        if (portData == null)
+        {
+            return;
+        }
+        _ = nodeData.Ports.Remove(portData);
+    }
+
+    private bool NodeSearchClause(Node node) => node.GraphId == NodeId;
+    private bool PortSearchClause(Port port) => port.ID == Id;
 }
 
 public abstract class APendingChanges
@@ -107,11 +183,18 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor.Model
     public class Node
     {
         [SerializeField]
-        private string _id;
-        public Guid ID
+        private string _graphId;
+        public Guid GraphId
         {
-            get => Guid.Parse(_id);
-            set => _id = value.ToString();
+            get => Guid.Parse(_graphId);
+            set => _graphId = value.ToString();
+        }
+        [SerializeField]
+        private string _stateId;
+        public Guid StateId
+        {
+            get => Guid.Parse(_stateId);
+            set => _stateId = value.ToString();
         }
         public bool IsInitial;
         public string Name;
@@ -139,7 +222,19 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor.Model
     public class Edge
     {
         public int EventEnumIndex;
-        public Guid OutPortId;
-        public Guid InNodeId;
+        [SerializeField]
+        private string _outPortId;
+        public Guid OutPortId
+        {
+            get => Guid.Parse(_outPortId);
+            set => _outPortId = value.ToString();
+        }
+        [SerializeField]
+        private string _inNodeId;
+        public Guid InNodeId
+        {
+            get => Guid.Parse(_inNodeId);
+            set => _inNodeId = value.ToString();
+        }
     }
 }

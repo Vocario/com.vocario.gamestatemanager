@@ -8,10 +8,10 @@ using Vocario.EventBasedArchitecture;
 
 public class GameEventSearchWindow : ScriptableObject, ISearchWindowProvider
 {
-    private List<GSMEditorWindow.EventInfo> _eventInfo = null;
+    private List<EventInfo> _eventInfo = null;
     private Action<int> _onSelectionCallback = null;
 
-    internal void Init(List<GSMEditorWindow.EventInfo> eventInfo, Action<int> onSelectionCallback)
+    internal void Init(List<EventInfo> eventInfo, Action<int> onSelectionCallback)
     {
         _eventInfo = eventInfo;
         _onSelectionCallback = onSelectionCallback;
