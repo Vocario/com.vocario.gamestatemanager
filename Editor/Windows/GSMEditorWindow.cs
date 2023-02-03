@@ -34,8 +34,9 @@ public class GSMEditorWindow : EditorWindow
         _changeManager = new ChangeManager(() => hasUnsavedChanges = true, () => hasUnsavedChanges = false);
         var nodeController = new NodeController(_changeManager, _stateManager.NodeData);
         var portController = new PortController(_changeManager, _stateManager.NodeData);
+        var stateBehaviourController = new StateBehaviourController(_changeManager, _stateManager.NodeData);
 
-        var dependencies = new GraphViewDependencies(eventInfo, nodeController, portController);
+        var dependencies = new GraphViewDependencies(eventInfo, nodeController, portController, stateBehaviourController);
         _graphView.Init(dependencies);
 
         _saveButton = root.Q<ToolbarButton>();
@@ -61,12 +62,14 @@ public class GraphViewDependencies
     public List<EventInfo> EventInfo { get; private set; }
     public NodeController NodeController { get; private set; }
     public PortController PortController { get; private set; }
+    public StateBehaviourController StateBehaviourController { get; private set; }
 
-    public GraphViewDependencies(List<EventInfo> eventInfo, NodeController nodeController, PortController portController)
+    public GraphViewDependencies(List<EventInfo> eventInfo, NodeController nodeController, PortController portController, StateBehaviourController stateBehaviourController)
     {
         EventInfo = eventInfo;
         NodeController = nodeController;
         PortController = portController;
+        StateBehaviourController = stateBehaviourController;
     }
 }
 
@@ -247,6 +250,12 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor
                 StateBehaviourType = typeName
             };
             _changeManager.AddChange(change);
+        }
+
+        internal List<string> GetList(Guid nodeId)
+        {
+            Node nodeData = _nodeData.Find(node => node.GraphId == nodeId);
+            return nodeData?.StateBehaviourTypes;
         }
     }
 }

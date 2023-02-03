@@ -11,8 +11,7 @@ public class GSMNode : Node
 {
     public readonly Rect INITIAL_NODE_POSITION = new Rect(100, 200, 100, 150);
     private List<EventInfo> _eventInfo;
-    private NodeController _nodeController;
-    private PortController _portController;
+    private GraphViewDependencies _dependencies;
     private GSMNodeDetails _nodeDetails;
     private Label _titleLabel;
     private TextField _nodeName;
@@ -23,15 +22,15 @@ public class GSMNode : Node
     public bool IsInitial { get; private set; }
     public Port InputPort { get; protected set; } = null;
 
-    public virtual void Init(Guid? id, string name, float x, float y, bool isInitial, List<EventInfo> eventInfo, List<PortModel> ports, NodeController nodeController, PortController portController)
+    public virtual void Init(Guid? id, string name, float x, float y, bool isInitial, List<EventInfo> eventInfo, List<PortModel> ports, GraphViewDependencies dependencies)
     {
         ID = id ?? Guid.NewGuid();
         title = name;
         this.name = name;
         _eventInfo = eventInfo;
-        _nodeController = nodeController;
-        _portController = portController;
+        _dependencies = dependencies;
         _nodeDetails = new GSMNodeDetails();
+        _nodeDetails.Init(ID, _dependencies.StateBehaviourController.Create, _dependencies.StateBehaviourController.Remove, _dependencies.StateBehaviourController.GetList(ID));
         foreach (PortModel port in ports)
         {
             _ = CreateEventOutput(port.ID, port.Index);
@@ -63,7 +62,7 @@ public class GSMNode : Node
         Label portLabel = outputPort.contentContainer.Q<Label>("type");
 
         portLabel.text = "";
-        var gameEventSelector = new GameEventSelector(null, null, ID, _eventInfo, _portController.Create, _portController.Update);
+        var gameEventSelector = new GameEventSelector(null, null, ID, _eventInfo, _dependencies.PortController.Create, _dependencies.PortController.Update);
         outputPort.contentContainer.Add(gameEventSelector);
         var deleteButton = new Button(() => RemovePort(gameEventSelector.Id, outputPort))
         {
@@ -82,7 +81,7 @@ public class GSMNode : Node
         Label portLabel = outputPort.contentContainer.Q<Label>("type");
 
         portLabel.text = "";
-        var gameEventSelector = new GameEventSelector(id, index, ID, _eventInfo, _portController.Create, _portController.Update);
+        var gameEventSelector = new GameEventSelector(id, index, ID, _eventInfo, _dependencies.PortController.Create, _dependencies.PortController.Update);
         outputPort.contentContainer.Add(gameEventSelector);
         var deleteButton = new Button(() => RemovePort(gameEventSelector.Id, outputPort))
         {
@@ -100,7 +99,7 @@ public class GSMNode : Node
         outputContainer.Remove(outputPort);
         RefreshExpandedState();
         _ = RefreshPorts();
-        _portController.Remove(selectorId, ID);
+        _dependencies.PortController.Remove(selectorId, ID);
     }
 
     private void RenderAsInitial()
@@ -154,19 +153,37 @@ public class GSMNode : Node
         title = _nodeName.text;
         name = title;
         Rect position = GetPosition();
-        _nodeController.Update(ID, name, position.x, position.y, IsInitial);
+        _dependencies.NodeController.Update(ID, name, position.x, position.y, IsInitial);
     }
 }
 
 public class GSMNodeDetails : VisualElement
 {
+    private Guid _nodeId;
     private Button _addButton = null;
     private VisualElement _container = null;
     private StateBehaviourSearchWindow _searchWindow = null;
+    private Action<Guid, string> _createStateBehaviour;
+    private Action<Guid, string> _removeStateBehaviour;
 
     public new class UxmlFactory : UxmlFactory<GSMNodeDetails, VisualElement.UxmlTraits> { }
 
     public GSMNodeDetails() => CreateGUI();
+
+    public void Init(Guid nodeId, Action<Guid, string> createStateBehaviour, Action<Guid, string> removeStateBehaviour, List<string> initialValues)
+    {
+        _nodeId = nodeId;
+        _createStateBehaviour = createStateBehaviour;
+        _removeStateBehaviour = removeStateBehaviour;
+
+        if (initialValues != null)
+        {
+            foreach (string typeName in initialValues)
+            {
+                AddNewItem(typeName);
+            }
+        }
+    }
 
     protected void CreateGUI()
     {
@@ -188,9 +205,15 @@ public class GSMNodeDetails : VisualElement
         {
             _searchWindow = ScriptableObject.CreateInstance<StateBehaviourSearchWindow>();
         }
-        _searchWindow.Init(AddNewItem);
+        _searchWindow.Init(CreateNewItem);
         var windowContext = new SearchWindowContext(GUIUtility.GUIToScreenPoint(Event.current.mousePosition));
         _ = SearchWindow.Open(windowContext, _searchWindow);
+    }
+
+    private void CreateNewItem(string name)
+    {
+        _createStateBehaviour?.Invoke(_nodeId, name);
+        AddNewItem(name);
     }
 
     private void AddNewItem(string name)
@@ -199,7 +222,11 @@ public class GSMNodeDetails : VisualElement
         _container.Add(newItem);
     }
 
-    private void RemoveItem(StateBehaviourItem item) => _container.Remove(item);
+    private void RemoveItem(StateBehaviourItem item)
+    {
+        _removeStateBehaviour?.Invoke(_nodeId, item.Name);
+        _container.Remove(item);
+    }
 }
 
 public class GameEventSelector : VisualElement
@@ -279,10 +306,12 @@ public class StateBehaviourItem : VisualElement
 {
     private Button _removeButton = null;
     private Label _label = null;
+    public string Name { get; private set; }
 
     public StateBehaviourItem(string name, Action<StateBehaviourItem> removeItem) : base()
     {
         VisualTreeAsset visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/com.vocario.gamestatemanager/Editor/Resources/NodeBehaviourItem.uxml");
+        Name = name;
 
         visualTree.CloneTree(this);
         _removeButton = this.Q<Button>("remove-button");
