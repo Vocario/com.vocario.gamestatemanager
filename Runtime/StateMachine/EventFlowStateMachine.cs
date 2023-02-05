@@ -12,6 +12,8 @@ public class EventFlowStateMachine : GameEventManager
 
 #if UNITY_EDITOR
     public List<Node> NodeData;
+    // TODO Maybe change the edge data to per game event selector
+    public List<Edge> EdgeData;
 #endif
 }
 
@@ -172,6 +174,43 @@ public class RemovePortPendingChanges : APendingChanges
     private bool PortSearchClause(Port port) => port.ID == Id;
 }
 
+public class CreateEdgePendingChanges : APendingChanges
+{
+    public List<Edge> EdgeData = null;
+    public Guid InNodeId;
+    public Guid OutNodeId;
+    public Guid OutPortId;
+
+    public override void Commit()
+    {
+        var edge = new Edge()
+        {
+            InNodeId = InNodeId,
+            OutNodeId = OutNodeId,
+            OutPortId = OutPortId,
+        };
+        EdgeData.Add(edge);
+    }
+}
+
+public class RemoveEdgePendingChanges : APendingChanges
+{
+    public List<Edge> EdgeData = null;
+    public Guid InNodeId;
+    public Guid OutPortId;
+
+    public override void Commit()
+    {
+        Edge edge = EdgeData.Find(EdgeSearchClause);
+        if (edge != null)
+        {
+            _ = EdgeData.Remove(edge);
+        }
+    }
+
+    private bool EdgeSearchClause(Edge edge) => edge.InNodeId == InNodeId && edge.OutPortId == OutPortId;
+}
+
 public abstract class APendingChanges
 {
     public abstract void Commit();
@@ -221,7 +260,6 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor.Model
     [Serializable]
     public class Edge
     {
-        public int EventEnumIndex;
         [SerializeField]
         private string _outPortId;
         public Guid OutPortId
@@ -235,6 +273,13 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor.Model
         {
             get => Guid.Parse(_inNodeId);
             set => _inNodeId = value.ToString();
+        }
+        [SerializeField]
+        private string _outNodeId;
+        public Guid OutNodeId
+        {
+            get => Guid.Parse(_outNodeId);
+            set => _outNodeId = value.ToString();
         }
     }
 }

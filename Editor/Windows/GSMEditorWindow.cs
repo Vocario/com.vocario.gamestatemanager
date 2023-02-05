@@ -35,8 +35,9 @@ public class GSMEditorWindow : EditorWindow
         var nodeController = new NodeController(_changeManager, _stateManager.NodeData);
         var portController = new PortController(_changeManager, _stateManager.NodeData);
         var stateBehaviourController = new StateBehaviourController(_changeManager, _stateManager.NodeData);
+        var edgeController = new EdgeController(_changeManager, _stateManager.EdgeData);
 
-        var dependencies = new GraphViewDependencies(eventInfo, nodeController, portController, stateBehaviourController);
+        var dependencies = new GraphViewDependencies(eventInfo, nodeController, portController, stateBehaviourController, edgeController);
         _graphView.Init(dependencies);
 
         _saveButton = root.Q<ToolbarButton>();
@@ -63,13 +64,15 @@ public class GraphViewDependencies
     public NodeController NodeController { get; private set; }
     public PortController PortController { get; private set; }
     public StateBehaviourController StateBehaviourController { get; private set; }
+    public EdgeController EdgeController { get; private set; }
 
-    public GraphViewDependencies(List<EventInfo> eventInfo, NodeController nodeController, PortController portController, StateBehaviourController stateBehaviourController)
+    public GraphViewDependencies(List<EventInfo> eventInfo, NodeController nodeController, PortController portController, StateBehaviourController stateBehaviourController, EdgeController edgeController)
     {
         EventInfo = eventInfo;
         NodeController = nodeController;
         PortController = portController;
         StateBehaviourController = stateBehaviourController;
+        EdgeController = edgeController;
     }
 }
 
@@ -257,5 +260,42 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor
             Node nodeData = _nodeData.Find(node => node.GraphId == nodeId);
             return nodeData?.StateBehaviourTypes;
         }
+    }
+
+    public class EdgeController
+    {
+        private ChangeManager _changeManager = null;
+        private List<Edge> _edgeData = null;
+
+        public EdgeController(ChangeManager changeManager, List<Edge> edgeData)
+        {
+            _changeManager = changeManager;
+            _edgeData = edgeData;
+        }
+
+        internal void Create(Guid outPortId, Guid inNodeId, Guid outNodeId)
+        {
+            var change = new CreateEdgePendingChanges()
+            {
+                EdgeData = _edgeData,
+                InNodeId = inNodeId,
+                OutNodeId = outNodeId,
+                OutPortId = outPortId
+            };
+            _changeManager.AddChange(change);
+        }
+
+        internal void Remove(Guid outPortId, Guid inNodeId)
+        {
+            var change = new RemoveEdgePendingChanges()
+            {
+                EdgeData = _edgeData,
+                InNodeId = inNodeId,
+                OutPortId = outPortId
+            };
+            _changeManager.AddChange(change);
+        }
+
+        internal Edge[] GetAll() => _edgeData.ToArray();
     }
 }

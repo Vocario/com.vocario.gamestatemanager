@@ -16,6 +16,8 @@ public class GSMNode : Node
     private Label _titleLabel;
     private TextField _nodeName;
     private NodeNameChangeButton _nodeNameButton;
+    public Dictionary<Port, Guid> GameSelectors { get; private set; } = new Dictionary<Port, Guid>();
+    public Dictionary<Guid, Port> Ports { get; private set; } = new Dictionary<Guid, Port>();
 
     public Guid ID { get; private set; }
     public string DialogueName { get; private set; }
@@ -72,6 +74,8 @@ public class GSMNode : Node
         outputContainer.Add(outputPort);
         RefreshExpandedState();
         _ = RefreshPorts();
+        GameSelectors[ outputPort ] = gameEventSelector.Id;
+        Ports[ gameEventSelector.Id ] = outputPort;
         return outputPort;
     }
 
@@ -91,15 +95,29 @@ public class GSMNode : Node
         outputContainer.Add(outputPort);
         RefreshExpandedState();
         _ = RefreshPorts();
+        GameSelectors[ outputPort ] = gameEventSelector.Id;
+        Ports[ gameEventSelector.Id ] = outputPort;
         return outputPort;
     }
 
     public void RemovePort(Guid selectorId, Port outputPort)
     {
+        if (outputPort.connected)
+        {
+            foreach (Edge edge in outputPort.connections)
+            {
+                edge.parent.Remove(edge);
+                if (edge.input.node is GSMNode node)
+                {
+                    _dependencies.EdgeController.Remove(selectorId, node.ID);
+                }
+            }
+            outputPort.DisconnectAll();
+        }
         outputContainer.Remove(outputPort);
+        _dependencies.PortController.Remove(selectorId, ID);
         RefreshExpandedState();
         _ = RefreshPorts();
-        _dependencies.PortController.Remove(selectorId, ID);
     }
 
     private void RenderAsInitial()
@@ -266,7 +284,7 @@ public class GameEventSelector : VisualElement
         _addButton.clicked += OpenGameEventSearchWindow;
         if (index.HasValue)
         {
-            UpdateValue(index.Value);
+            UpdateValueWithoutNotify(index.Value);
         }
     }
 
@@ -275,7 +293,7 @@ public class GameEventSelector : VisualElement
         _addButton.clicked -= OpenGameEventSearchWindow;
     }
 
-    private void UpdateValue(int value)
+    private void UpdateValueWithoutNotify(int value)
     {
         if (value < 0)
         {
@@ -286,6 +304,11 @@ public class GameEventSelector : VisualElement
 
         _imageElement.style.backgroundImage = EditorGUIUtility.FindTexture("d_cs Script Icon");
         _label.text = _eventInfo[ value ].Name;
+    }
+
+    private void UpdateValue(int value)
+    {
+        UpdateValueWithoutNotify(value);
         _onUpdate?.Invoke(_id, _nodeId, value);
 
     }

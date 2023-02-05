@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NodeModel = Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor.Model.Node;
 using PortModel = Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor.Model.Port;
+using EdgeModel = Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor.Model.Edge;
 
 public class GSMGraphView : GraphView
 {
@@ -37,6 +38,17 @@ public class GSMGraphView : GraphView
         {
             _ = CreateNode(node.GraphId, node.Name, node.X, node.Y, node.IsInitial, node.Ports);
         }
+
+        EdgeModel[] edges = _dependencies.EdgeController.GetAll();
+        foreach (EdgeModel edge in edges)
+        {
+            GSMNode outNode = Nodes[ edge.OutNodeId ];
+            GSMNode inNode = Nodes[ edge.InNodeId ];
+            Port outPort = outNode.Ports[ edge.OutPortId ];
+
+            Edge createdEdge = outPort.ConnectTo(inNode.InputPort);
+            Add(createdEdge);
+        }
     }
 
     private GraphViewChange OnGraphViewChanged(GraphViewChange graphViewChange)
@@ -60,6 +72,26 @@ public class GSMGraphView : GraphView
                 if (item is GSMNode node)
                 {
                     _dependencies.NodeController.Remove(node.ID);
+                }
+
+                if (item is Edge edge)
+                {
+                    var inNode = (GSMNode) edge.input.node;
+                    var outNode = (GSMNode) edge.output.node;
+                    _dependencies.EdgeController.Remove(outNode.GameSelectors[ edge.output ], inNode.ID);
+                }
+            }
+        }
+
+        if (graphViewChange.edgesToCreate != null)
+        {
+            foreach (GraphElement item in graphViewChange.edgesToCreate)
+            {
+                if (item is Edge edge)
+                {
+                    var inNode = (GSMNode) edge.input.node;
+                    var outNode = (GSMNode) edge.output.node;
+                    _dependencies.EdgeController.Create(outNode.GameSelectors[ edge.output ], inNode.ID, outNode.ID);
                 }
             }
         }
