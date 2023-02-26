@@ -21,7 +21,6 @@ public class Transition : AGameEventListener
         _from = from;
         _to = to;
 
-        _ = from.AddTransition(this);
         _ = _gameEvent.Register(this);
     }
 

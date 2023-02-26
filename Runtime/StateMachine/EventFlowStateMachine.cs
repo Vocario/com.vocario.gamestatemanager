@@ -5,10 +5,32 @@ using System.Collections.Generic;
 using Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor.Model;
 
 [CreateAssetMenu(fileName = "EventFlowStateMachine_", menuName = "Vocario/EventFlowStateMachine", order = 0)]
-public class EventFlowStateMachine : GameEventManager
+public class EventFlowStateMachine : StateMachine
 {
     [SerializeField]
-    private StateMachine _stateMachine;
+    private bool _initialized = false;
+
+    private void Awake()
+    {
+        if (_initialized)
+        {
+            return;
+        }
+
+        NodeData = new List<Node>();
+        EdgeData = new List<Edge>();
+
+        State state = CreateState<State>();
+        NodeData.Add(new Node()
+        {
+            GraphId = Guid.NewGuid(),
+            IsInitial = true,
+            Name = "Start",
+            StateId = state.Id
+        });
+        _initialized = true;
+    }
+
 
 #if UNITY_EDITOR
     public List<Node> NodeData;
@@ -29,10 +51,16 @@ public class State : AState
 
 public class CreateNodePendingChanges : APendingChanges
 {
+    public StateMachine Context = null;
     public Node Data = null;
     public List<Node> SavedData = null;
 
-    public override void Commit() => SavedData.Add(Data);
+    public override void Commit()
+    {
+        State state = Context.CreateState<State>();
+        Data.StateId = state.Id;
+        SavedData.Add(Data);
+    }
 }
 
 public class UpdateNodePendingChanges : APendingChanges
@@ -61,6 +89,7 @@ public class UpdateNodePendingChanges : APendingChanges
 
 public class RemoveNodePendingChanges : APendingChanges
 {
+    public StateMachine Context = null;
     public Guid Id;
     public List<Node> SavedData = null;
 
@@ -70,6 +99,7 @@ public class RemoveNodePendingChanges : APendingChanges
         if (nodeData != null)
         {
             _ = SavedData.Remove(nodeData);
+            Context.DeleteState(nodeData.StateId);
         }
     }
 
@@ -176,6 +206,8 @@ public class RemovePortPendingChanges : APendingChanges
 
 public class CreateEdgePendingChanges : APendingChanges
 {
+    public StateMachine Context = null;
+    public List<Node> NodeData = null;
     public List<Edge> EdgeData = null;
     public Guid InNodeId;
     public Guid OutNodeId;
@@ -190,17 +222,40 @@ public class CreateEdgePendingChanges : APendingChanges
             OutPortId = OutPortId,
         };
         EdgeData.Add(edge);
+        Node inNode = NodeData.Find(InNodeSearchClause);
+        Node outNode = NodeData.Find(OutNodeSearchClause);
+        Port port = outNode.Ports.Find(PortSearchClause);
+        Debug.Log($"inNode {inNode}, outNode {outNode}, port {port}");
+        _ = Context.CreateTransition(port.Index, outNode.StateId, inNode.StateId);
     }
+
+    private bool InNodeSearchClause(Node node) => node.GraphId == InNodeId;
+    private bool OutNodeSearchClause(Node node) => node.GraphId == OutNodeId;
+
+    private bool PortSearchClause(Port port) => port.ID == OutPortId;
 }
 
 public class RemoveEdgePendingChanges : APendingChanges
 {
+    public StateMachine Context = null;
     public List<Edge> EdgeData = null;
+    public List<Node> NodeData = null;
     public Guid InNodeId;
     public Guid OutPortId;
 
     public override void Commit()
     {
+        Node node = NodeData.Find(NodeSearchClause);
+        if (node == null)
+        {
+            return;
+        }
+        Port port = node.Ports.Find(PortSearchClause);
+        if (port == null)
+        {
+            return;
+        }
+        Context.DeleteTransition(port.Index, node.StateId);
         Edge edge = EdgeData.Find(EdgeSearchClause);
         if (edge != null)
         {
@@ -209,6 +264,8 @@ public class RemoveEdgePendingChanges : APendingChanges
     }
 
     private bool EdgeSearchClause(Edge edge) => edge.InNodeId == InNodeId && edge.OutPortId == OutPortId;
+    private bool NodeSearchClause(Node node) => node.GraphId == InNodeId;
+    private bool PortSearchClause(Port port) => port.ID == OutPortId;
 }
 
 public abstract class APendingChanges

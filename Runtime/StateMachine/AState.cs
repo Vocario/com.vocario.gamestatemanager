@@ -1,6 +1,5 @@
 using UnityEngine;
 using System;
-using System.Collections.Generic;
 using Vocario.EventBasedArchitecture;
 
 [Serializable]
@@ -8,10 +7,11 @@ public abstract class AState
 {
     [SerializeField]
     protected string _id = "";
-    [SerializeReference]
-    protected List<AGameEventListener> _transitions;
-    protected StateMachine _parent = null;
     public Guid Id => Guid.Parse(_id);
+    // TODO Maybe also change this to a dictionary or hashset
+    [SerializeReference]
+    protected TransitionsDictionary _transitions;
+    protected StateMachine _parent = null;
     [SerializeField]
     public bool IsInitial = false;
     [SerializeField]
@@ -23,24 +23,27 @@ public abstract class AState
     {
         _id = Guid.NewGuid().ToString();
         _parent = parent;
-        _parent.AddState(this);
-        _transitions = new List<AGameEventListener>();
+        _transitions = new TransitionsDictionary();
     }
 
-    internal bool AddTransition(Transition transition)
+    // TODO Add a contains validation
+    internal Transition CreateTransition(GameEvent gameEvent, AState to)
     {
-        if (transition == null)
+        if (gameEvent == null || to == null)
         {
-            Debug.LogError($"Attempted to add null transition to state");
-            return false;
+            throw new ArgumentNullException();
         }
-        _transitions.Add(transition);
-        return true;
+        var transition = new Transition(gameEvent, this, to);
+        _transitions[ gameEvent.Name ] = transition;
+        return transition;
     }
+
+    // TODO Add a contains validation
+    internal void RemoveTransition(GameEvent gameEvent) => _transitions.Remove(gameEvent);
 
     public void Enter()
     {
-        foreach (Transition transition in _transitions)
+        foreach (Transition transition in _transitions.Values)
         {
             transition.Active = true;
         }
@@ -50,7 +53,7 @@ public abstract class AState
     }
     public void Exit()
     {
-        foreach (Transition transition in _transitions)
+        foreach (Transition transition in _transitions.Values)
         {
             transition.Active = false;
         }
@@ -63,3 +66,6 @@ public abstract class AState
 
     protected abstract void OnExit();
 }
+
+[Serializable]
+public class TransitionsDictionary : SerializableDictionary<string, Transition> { }

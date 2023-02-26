@@ -47,7 +47,7 @@ public class GSMGraphView : GraphView
             Port outPort = outNode.Ports[ edge.OutPortId ];
 
             Edge createdEdge = outPort.ConnectTo(inNode.InputPort);
-            Add(createdEdge);
+            AddElement(createdEdge);
         }
     }
 

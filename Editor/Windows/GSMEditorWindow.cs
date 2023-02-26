@@ -32,10 +32,10 @@ public class GSMEditorWindow : EditorWindow
             eventInfo.Add(new EventInfo() { EnumId = item.Key, Name = item.Value.Name });
         }
         _changeManager = new ChangeManager(() => hasUnsavedChanges = true, () => hasUnsavedChanges = false);
-        var nodeController = new NodeController(_changeManager, _stateManager.NodeData);
+        var nodeController = new NodeController(_stateManager, _changeManager, _stateManager.NodeData);
         var portController = new PortController(_changeManager, _stateManager.NodeData);
         var stateBehaviourController = new StateBehaviourController(_changeManager, _stateManager.NodeData);
-        var edgeController = new EdgeController(_changeManager, _stateManager.EdgeData);
+        var edgeController = new EdgeController(_stateManager, _changeManager, _stateManager.NodeData, _stateManager.EdgeData);
 
         var dependencies = new GraphViewDependencies(eventInfo, nodeController, portController, stateBehaviourController, edgeController);
         _graphView.Init(dependencies);
@@ -119,11 +119,13 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor
 
     public class NodeController
     {
+        private StateMachine _stateMachine = null;
         private ChangeManager _changeManager = null;
         private List<Node> _nodeData = null;
 
-        public NodeController(ChangeManager changeManager, List<Node> nodeData)
+        public NodeController(StateMachine stateMachine, ChangeManager changeManager, List<Node> nodeData)
         {
+            _stateMachine = stateMachine;
             _changeManager = changeManager;
             _nodeData = nodeData;
         }
@@ -132,6 +134,7 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor
         {
             var change = new CreateNodePendingChanges()
             {
+                Context = _stateMachine,
                 SavedData = _nodeData,
                 Data = new Node()
                 {
@@ -163,6 +166,7 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor
         {
             var change = new RemoveNodePendingChanges()
             {
+                Context = _stateMachine,
                 SavedData = _nodeData,
                 Id = id
             };
@@ -264,12 +268,16 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor
 
     public class EdgeController
     {
+        private StateMachine _stateMachine = null;
         private ChangeManager _changeManager = null;
+        private List<Node> _nodeData = null;
         private List<Edge> _edgeData = null;
 
-        public EdgeController(ChangeManager changeManager, List<Edge> edgeData)
+        public EdgeController(StateMachine stateMachine, ChangeManager changeManager, List<Node> nodeData, List<Edge> edgeData)
         {
+            _stateMachine = stateMachine;
             _changeManager = changeManager;
+            _nodeData = nodeData;
             _edgeData = edgeData;
         }
 
@@ -277,6 +285,8 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor
         {
             var change = new CreateEdgePendingChanges()
             {
+                Context = _stateMachine,
+                NodeData = _nodeData,
                 EdgeData = _edgeData,
                 InNodeId = inNodeId,
                 OutNodeId = outNodeId,
@@ -289,6 +299,8 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor
         {
             var change = new RemoveEdgePendingChanges()
             {
+                Context = _stateMachine,
+                NodeData = _nodeData,
                 EdgeData = _edgeData,
                 InNodeId = inNodeId,
                 OutPortId = outPortId
