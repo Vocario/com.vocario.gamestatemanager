@@ -1,9 +1,10 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System;
+using Vocario.GameStateManager;
 
 [Serializable]
-public class UIState : AState
+public class UIState : State
 {
     private UIManager _uIManager = null;
     public List<UIScreenId> ScreensToShowOnEnter = new List<UIScreenId>();

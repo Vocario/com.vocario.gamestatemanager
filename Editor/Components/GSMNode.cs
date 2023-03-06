@@ -6,6 +6,7 @@ using UnityEditor;
 using System.Collections.Generic;
 using Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor;
 using PortModel = Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor.Model.Port;
+using Vocario.GameStateManager;
 
 public class GSMNode : Node
 {

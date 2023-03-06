@@ -1,6 +1,10 @@
-public abstract class AStateBehaviour
+namespace Vocario.GameStateManager
 {
-    public abstract void OnEnter();
+    [System.Serializable]
+    public abstract class AStateBehaviour
+    {
+        public abstract void OnEnter();
 
-    public abstract void OnExit();
+        public abstract void OnExit();
+    }
 }

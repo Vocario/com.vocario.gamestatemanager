@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System;
 using UnityEditor;
+using Vocario.GameStateManager;
 
 public class StateBehaviourSearchWindow : ScriptableObject, ISearchWindowProvider
 {

@@ -3,6 +3,7 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor.Model;
+using Vocario.GameStateManager;
 
 [CreateAssetMenu(fileName = "EventFlowStateMachine_", menuName = "Vocario/EventFlowStateMachine", order = 0)]
 public class EventFlowStateMachine : StateMachine
@@ -38,16 +39,6 @@ public class EventFlowStateMachine : StateMachine
     public List<Edge> EdgeData;
 #endif
 }
-
-public class State : AState
-{
-    public State(StateMachine parent) : base(parent) { }
-
-    protected override void OnEnter() { }
-
-    protected override void OnExit() { }
-}
-
 
 public class CreateNodePendingChanges : APendingChanges
 {

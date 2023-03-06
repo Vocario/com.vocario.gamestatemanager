@@ -117,6 +117,8 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor
     using Model;
     using System;
 
+    using Vocario.GameStateManager;
+
     public class NodeController
     {
         private StateMachine _stateMachine = null;

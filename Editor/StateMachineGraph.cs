@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
 using System;
-using UnityEditor;
+using Vocario.GameStateManager;
 
 [CreateAssetMenu(fileName = "StateMachineGraph_", menuName = "Vocario/StateMachineGraph", order = 11)]
 public class StateMachineGraph : ScriptableObject
@@ -11,7 +11,7 @@ public class StateMachineGraph : ScriptableObject
     private StateMachine _stateMachine = new StateMachine();
     private List<NodeMetadata> _nodeMetadata = new List<NodeMetadata>();
 
-    public T CreateState<T>(Node node) where T : AState
+    public T CreateState<T>(Node node) where T : State
     {
         T newState = _stateMachine.CreateState<T>();
         _nodeMetadata.Add(new NodeMetadata()
