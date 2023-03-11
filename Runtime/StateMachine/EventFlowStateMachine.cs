@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor.Model;
 using Vocario.GameStateManager;
+using UnityEditor;
 
 [CreateAssetMenu(fileName = "EventFlowStateMachine_", menuName = "Vocario/EventFlowStateMachine", order = 0)]
 public class EventFlowStateMachine : StateMachine

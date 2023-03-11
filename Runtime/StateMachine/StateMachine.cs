@@ -27,10 +27,8 @@ namespace Vocario.GameStateManager
         // TODO Possible extra validation?
         public State CurrentState = null;
         //TODO Maybe change to dictionary to avoid lookup
-        [SerializeReference]
-        protected StatesDictionary _states;
-
-        public StateMachine() => _states = new StatesDictionary();
+        [SerializeField]
+        protected StatesDictionary _states = new StatesDictionary();
 
         public T CreateState<T>() where T : State
         {
@@ -74,11 +72,11 @@ namespace Vocario.GameStateManager
                 // TODO Add log or exception
                 return;
             }
-
             _states.Add(state.Id.ToString(), state);
+
         }
 
-        protected State GetState(Guid id) => _states[ id.ToString() ];
+        public State GetState(Guid id) => _states[ id.ToString() ];
 
         public void Clear() => _states.Clear();
 

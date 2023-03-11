@@ -22,7 +22,7 @@ namespace Vocario.GameStateManager
         [SerializeField]
         protected StateBehavioursDictionary _stateBehaviours = new StateBehavioursDictionary();
 
-        protected State(StateMachine parent)
+        public State(StateMachine parent)
         {
             _id = Guid.NewGuid().ToString();
             _parent = parent;
@@ -52,22 +52,42 @@ namespace Vocario.GameStateManager
             return true;
         }
 
-        internal bool AddStateBehaviour(string typeString)
+        public AStateBehaviour AddStateBehaviour(string typeString)
         {
             if (_stateBehaviours.Contains(typeString))
             {
-                return false;
+                return null;
             }
 
-            var type = Type.GetType(typeString);
+            Type type = GetType(typeString.Trim());
             if (!type.IsSubclassOf(typeof(AStateBehaviour)))
             {
-                return false;
+                Debug.Log($"{type.IsSubclassOf(typeof(AStateBehaviour))}");
+                return null;
+            }
+            var behaviourInstance = (AStateBehaviour) ScriptableObject.CreateInstance(type);
+
+            _stateBehaviours.Add(typeString, behaviourInstance);
+            return behaviourInstance;
+        }
+
+        public static Type GetType(string typeName)
+        {
+            var type = Type.GetType(typeName);
+            if (type != null)
+            {
+                return type;
             }
 
-            var behaviourInstance = (AStateBehaviour) Activator.CreateInstance(type);
-            _stateBehaviours.Add(typeString, behaviourInstance);
-            return true;
+            foreach (System.Reflection.Assembly a in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                type = a.GetType(typeName);
+                if (type != null)
+                {
+                    return type;
+                }
+            }
+            return null;
         }
 
         internal bool RemoveStateBehaviour(string typeString) => _stateBehaviours.Contains(typeString) && _stateBehaviours.Remove(typeString);

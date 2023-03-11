@@ -1,31 +1,36 @@
-using System.Collections.Generic;
+using UnityEngine.UIElements;
+using UnityEngine;
 
-public class UIManagerBehaviour : SingletonMonoBehaviour<UIManagerBehaviour>
+namespace Vocario.UI
 {
-    private Dictionary<UIScreenId, UIScreen> _screens = new Dictionary<UIScreenId, UIScreen>();
-
-    public void Show(UIScreenId id)
+    [RequireComponent(typeof(UIDocument))]
+    public class UIManagerBehaviour : SingletonMonoBehaviour<UIManagerBehaviour>
     {
-        if (!_screens.ContainsKey(id))
+        protected AController _activeScreenController = null;
+        protected UIDocument _mainUIDocument = null;
+
+        internal UIDocument MainUIDocument
         {
-            // TODO Prefab validation
-            UIScreen newScreen = Instantiate(id.Screen, transform);
-            _screens.Add(id, newScreen);
+            get
+            {
+                if (_mainUIDocument == null)
+                {
+                    _mainUIDocument = GetComponent<UIDocument>();
+                }
+                return _mainUIDocument;
+            }
         }
-        _screens[ id ].Show();
-    }
 
-    public void Hide(UIScreenId id) =>
-        // TODO Validation
-        _screens[ id ].Hide();
-
-    protected override void Awake()
-    {
-        base.Awake();
-        UIScreen[] screens = GetComponentsInChildren<UIScreen>();
-        foreach (UIScreen screen in screens)
+        public bool ShowScreen(AController controller)
         {
-            _screens.Add(screen.ScreenId, screen);
+            if (_activeScreenController == controller)
+            {
+                return false;
+            }
+            _activeScreenController.Hide();
+            _activeScreenController = controller;
+            _activeScreenController.Show(MainUIDocument);
+            return true;
         }
     }
 }

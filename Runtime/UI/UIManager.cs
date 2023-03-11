@@ -1,15 +1,26 @@
 using UnityEngine;
-using System.Collections.Generic;
 
-[CreateAssetMenu(fileName = "UIManager_", menuName = "Scriptable/UIManager", order = 11)]
-public class UIManager : ScriptableObject
+namespace Vocario.UI
 {
-    [SerializeField]
-    private List<UIScreenId> _screenIds = new List<UIScreenId>();
-    public string ScreenPrefabsPath;
+    [CreateAssetMenu(fileName = "UIManager_", menuName = "Scriptable/UIManager", order = 11)]
+    public class UIManager : ScriptableObject
+    {
+        [SerializeField]
+        protected ScreensMapping _screenMapping = new ScreensMapping();
+        protected string _activeScreenName = null;
 
-    public void Show(UIScreenId id) => UIManagerBehaviour.Instance.Show(id);
-    public void Hide(UIScreenId id) => UIManagerBehaviour.Instance.Hide(id);
+        public bool ShowScreen(string screenName)
+        {
+            if (_activeScreenName == screenName || !_screenMapping.Contains(screenName))
+            {
+                return false;
+            }
+            _screenMapping[ _activeScreenName ].Hide();
+            // _screenMapping[ screenName ].Show();
+            _activeScreenName = screenName;
+            return true;
+        }
+    }
 
-    public void AddScreenId(UIScreenId screenId) => _screenIds.Add(screenId);
+    public class ScreensMapping : SerializableDictionary<string, AController> { }
 }

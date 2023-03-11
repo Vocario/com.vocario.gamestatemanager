@@ -182,14 +182,14 @@ public class GSMNodeDetails : VisualElement
     private Button _addButton = null;
     private VisualElement _container = null;
     private StateBehaviourSearchWindow _searchWindow = null;
-    private Action<Guid, string> _createStateBehaviour;
+    private Func<Guid, string, VisualElement> _createStateBehaviour;
     private Action<Guid, string> _removeStateBehaviour;
 
     public new class UxmlFactory : UxmlFactory<GSMNodeDetails, VisualElement.UxmlTraits> { }
 
     public GSMNodeDetails() => CreateGUI();
 
-    public void Init(Guid nodeId, Action<Guid, string> createStateBehaviour, Action<Guid, string> removeStateBehaviour, List<string> initialValues)
+    public void Init(Guid nodeId, Func<Guid, string, VisualElement> createStateBehaviour, Action<Guid, string> removeStateBehaviour, List<string> initialValues)
     {
         _nodeId = nodeId;
         _createStateBehaviour = createStateBehaviour;
@@ -231,8 +231,10 @@ public class GSMNodeDetails : VisualElement
 
     private void CreateNewItem(string name)
     {
-        _createStateBehaviour?.Invoke(_nodeId, name);
-        AddNewItem(name);
+        VisualElement element = _createStateBehaviour?.Invoke(_nodeId, name);
+        Debug.Log($"{element}");
+        _container.Add(element);
+        // AddNewItem(name);
     }
 
     private void AddNewItem(string name)

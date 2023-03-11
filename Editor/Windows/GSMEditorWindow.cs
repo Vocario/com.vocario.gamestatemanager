@@ -34,7 +34,7 @@ public class GSMEditorWindow : EditorWindow
         _changeManager = new ChangeManager(() => hasUnsavedChanges = true, () => hasUnsavedChanges = false);
         var nodeController = new NodeController(_stateManager, _changeManager, _stateManager.NodeData);
         var portController = new PortController(_changeManager, _stateManager.NodeData);
-        var stateBehaviourController = new StateBehaviourController(_changeManager, _stateManager.NodeData);
+        var stateBehaviourController = new StateBehaviourController(_stateManager, _changeManager, _stateManager.NodeData);
         var edgeController = new EdgeController(_stateManager, _changeManager, _stateManager.NodeData, _stateManager.EdgeData);
 
         var dependencies = new GraphViewDependencies(eventInfo, nodeController, portController, stateBehaviourController, edgeController);
@@ -230,16 +230,18 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor
 
     public class StateBehaviourController
     {
+        private StateMachine _stateMachine = null;
         private ChangeManager _changeManager = null;
         private List<Node> _nodeData = null;
 
-        public StateBehaviourController(ChangeManager changeManager, List<Node> nodeData)
+        public StateBehaviourController(StateMachine stateMachine, ChangeManager changeManager, List<Node> nodeData)
         {
+            _stateMachine = stateMachine;
             _changeManager = changeManager;
             _nodeData = nodeData;
         }
 
-        internal void Create(Guid nodeId, string typeName)
+        internal VisualElement Create(Guid nodeId, string typeName)
         {
             var change = new CreateStateBehaviourPendingChanges()
             {
@@ -248,6 +250,15 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor
                 StateBehaviourType = typeName
             };
             _changeManager.AddChange(change);
+            Node nodeData = _nodeData.Find((Node node) => node.GraphId == nodeId);
+            AStateBehaviour stateBehaviour = _stateMachine.GetState(nodeData.StateId).AddStateBehaviour(typeName);
+            var editor = UnityEditor.Editor.CreateEditor(stateBehaviour);
+            // Debug.Log($"{editor}");
+            // Debug.Log($"{editor.CreateInspectorGUI()}");
+            // var inspectorIMGUI = new IMGUIContainer(() => UnityEditor.Editor.CreateEditor(stateBehaviour).OnInspectorGUI());
+            // return new InspectorElement(stateBehaviour);
+            // return inspectorIMGUI;
+            return editor.CreateInspectorGUI();
         }
 
         internal void Remove(Guid nodeId, string typeName)

@@ -1,7 +1,12 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
     <ui:VisualElement name="container">
         <ui:VisualElement name="content" style="background-color: rgb(65, 65, 65); height: auto; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; border-left-color: rgb(30, 30, 30); border-right-color: rgb(30, 30, 30); border-top-color: rgb(30, 30, 30); border-bottom-color: rgb(30, 30, 30); border-top-left-radius: 3px; border-bottom-left-radius: 3px; border-top-right-radius: 0; border-bottom-right-radius: 3px; padding-left: 5px; padding-right: 5px; padding-top: 5px; padding-bottom: 4px;">
-            <ui:VisualElement name="behaviour-list" style="height: auto;" />
+            <ui:VisualElement name="behaviour-list" style="height: auto;">
+                <ui:VisualElement>
+                    <uie:PropertyField />
+                    <uie:PropertyField />
+                </ui:VisualElement>
+            </ui:VisualElement>
             <ui:Button text="+ Add State Behaviour" display-tooltip-when-elided="true" name="add-button" style="margin-left: 3px; margin-right: 3px;" />
         </ui:VisualElement>
     </ui:VisualElement>
