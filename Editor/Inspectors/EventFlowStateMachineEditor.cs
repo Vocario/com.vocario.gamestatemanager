@@ -1,4 +1,5 @@
 using Vocario.EventBasedArchitecture;
+using Vocario.EventBasedArchitecture.EventFlowStateMachine;
 using UnityEngine;
 
 [UnityEditor.CustomEditor(typeof(EventFlowStateMachine))]

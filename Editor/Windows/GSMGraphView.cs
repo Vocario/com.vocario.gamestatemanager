@@ -36,7 +36,7 @@ public class GSMGraphView : GraphView
         NodeModel[] nodes = _dependencies.NodeController.GetAll();
         foreach (NodeModel node in nodes)
         {
-            _ = CreateNode(node.GraphId, node.Name, node.X, node.Y, node.IsInitial, node.Ports);
+            _ = CreateNode(node.GraphId, node.Name, node.X, node.Y, node.IsInitial, node.Ports.Values.ToList());
         }
 
         EdgeModel[] edges = _dependencies.EdgeController.GetAll();

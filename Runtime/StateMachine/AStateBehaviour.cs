@@ -1,10 +1,10 @@
 namespace Vocario.GameStateManager
 {
     [System.Serializable]
-    public abstract class AStateBehaviour : UnityEngine.ScriptableObject
+    public class AStateBehaviour : UnityEngine.ScriptableObject
     {
-        public abstract void OnEnter();
+        public virtual void OnEnter() { }
 
-        public abstract void OnExit();
+        public virtual void OnExit() { }
     }
 }

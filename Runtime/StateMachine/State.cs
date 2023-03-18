@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 using Vocario.EventBasedArchitecture;
+using System.Linq;
 
 namespace Vocario.GameStateManager
 {
@@ -12,7 +13,6 @@ namespace Vocario.GameStateManager
         public Guid Id => Guid.Parse(_id);
         [SerializeReference]
         protected TransitionsDictionary _transitions;
-        protected StateMachine _parent = null;
         [SerializeField]
         public bool IsInitial = false;
         [SerializeField]
@@ -22,10 +22,9 @@ namespace Vocario.GameStateManager
         [SerializeField]
         protected StateBehavioursDictionary _stateBehaviours = new StateBehavioursDictionary();
 
-        public State(StateMachine parent)
+        public State()
         {
             _id = Guid.NewGuid().ToString();
-            _parent = parent;
             _transitions = new TransitionsDictionary();
         }
 
@@ -67,6 +66,7 @@ namespace Vocario.GameStateManager
             }
             var behaviourInstance = (AStateBehaviour) ScriptableObject.CreateInstance(type);
 
+
             _stateBehaviours.Add(typeString, behaviourInstance);
             return behaviourInstance;
         }
@@ -90,7 +90,19 @@ namespace Vocario.GameStateManager
             return null;
         }
 
-        internal bool RemoveStateBehaviour(string typeString) => _stateBehaviours.Contains(typeString) && _stateBehaviours.Remove(typeString);
+        public AStateBehaviour RemoveStateBehaviour(string typeString)
+        {
+            if (!_stateBehaviours.Contains(typeString))
+            {
+                return null;
+            }
+            AStateBehaviour stateBehaviour = _stateBehaviours[ typeString ];
+
+            _ = _stateBehaviours.Remove(typeString);
+            return stateBehaviour;
+        }
+
+        public AStateBehaviour[] GetStateBehaviours() => _stateBehaviours.Values.ToArray();
 
         public void Enter()
         {

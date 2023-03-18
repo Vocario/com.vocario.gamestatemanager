@@ -4,13 +4,13 @@ using UnityEngine;
 using UnityEditor.UIElements;
 using System.Collections.Generic;
 using Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor;
+using Vocario.EventBasedArchitecture.EventFlowStateMachine;
 
 public class GSMEditorWindow : EditorWindow
 {
     private EventFlowStateMachine _stateManager = null;
     private GSMGraphView _graphView = null;
     private ToolbarButton _saveButton = null;
-    private ChangeManager _changeManager = null;
 
     public static void Open(EventFlowStateMachine stateManager)
     {
@@ -31,11 +31,10 @@ public class GSMEditorWindow : EditorWindow
         {
             eventInfo.Add(new EventInfo() { EnumId = item.Key, Name = item.Value.Name });
         }
-        _changeManager = new ChangeManager(() => hasUnsavedChanges = true, () => hasUnsavedChanges = false);
-        var nodeController = new NodeController(_stateManager, _changeManager, _stateManager.NodeData);
-        var portController = new PortController(_changeManager, _stateManager.NodeData);
-        var stateBehaviourController = new StateBehaviourController(_stateManager, _changeManager, _stateManager.NodeData);
-        var edgeController = new EdgeController(_stateManager, _changeManager, _stateManager.NodeData, _stateManager.EdgeData);
+        var nodeController = new NodeController(_stateManager, _stateManager.GraphViewData);
+        var portController = new PortController(_stateManager, _stateManager.GraphViewData);
+        var stateBehaviourController = new StateBehaviourController(_stateManager, _stateManager.GraphViewData);
+        var edgeController = new EdgeController(_stateManager, _stateManager.GraphViewData);
 
         var dependencies = new GraphViewDependencies(eventInfo, nodeController, portController, stateBehaviourController, edgeController);
         _graphView.Init(dependencies);
@@ -51,11 +50,7 @@ public class GSMEditorWindow : EditorWindow
         visualTree.CloneTree(root);
     }
 
-    public override void SaveChanges()
-    {
-        base.SaveChanges();
-        _changeManager.Commit();
-    }
+    public override void SaveChanges() => base.SaveChanges();
 }
 
 public class GraphViewDependencies
@@ -82,245 +77,189 @@ public class EventInfo
     public string Name = "Invalid";
 }
 
-public class ChangeManager
-{
-    // TODO Change to delegate
-    private System.Action _onChangeAdded;
-    private System.Action _onChangesCommited;
-    private Queue<APendingChanges> _changesQueue = new Queue<APendingChanges>();
-
-    internal ChangeManager(System.Action OnChangeAdded, System.Action OnChangesCommited)
-    {
-        _onChangeAdded = OnChangeAdded;
-        _onChangesCommited = OnChangesCommited;
-    }
-
-    internal void Commit()
-    {
-        while (_changesQueue.Count > 0)
-        {
-            APendingChanges change = _changesQueue.Dequeue();
-            change.Commit();
-        }
-        _onChangesCommited?.Invoke();
-    }
-
-    internal void AddChange(APendingChanges change)
-    {
-        _changesQueue.Enqueue(change);
-        _onChangeAdded?.Invoke();
-    }
-}
-
 namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor
 {
     using Model;
     using System;
+    using System.Linq;
 
     using Vocario.GameStateManager;
 
     public class NodeController
     {
         private StateMachine _stateMachine = null;
-        private ChangeManager _changeManager = null;
-        private List<Node> _nodeData = null;
+        private GraphViewData _graphData = null;
 
-        public NodeController(StateMachine stateMachine, ChangeManager changeManager, List<Node> nodeData)
+        public NodeController(StateMachine stateMachine, GraphViewData graphData)
         {
             _stateMachine = stateMachine;
-            _changeManager = changeManager;
-            _nodeData = nodeData;
+            _graphData = graphData;
         }
 
         internal void Create(Guid id, string name, float x, float y, bool isInitial)
         {
-            var change = new CreateNodePendingChanges()
-            {
-                Context = _stateMachine,
-                SavedData = _nodeData,
-                Data = new Node()
-                {
-                    GraphId = id,
-                    Name = name,
-                    X = x,
-                    Y = y,
-                    IsInitial = isInitial
-                },
-            };
-            _changeManager.AddChange(change);
+            Undo.RecordObject(_stateMachine, "Created new state through graph view");
+
+            State newState = _stateMachine.CreateState<State>();
+            _ = _graphData.CreateNode(id, newState.Id, name, x, y, isInitial);
         }
 
         internal void Update(Guid id, string name, float x, float y, bool isInitial)
         {
-            var change = new UpdateNodePendingChanges()
-            {
-                SavedData = _nodeData,
-                Id = id,
-                Name = name,
-                X = x,
-                Y = y,
-                IsInitial = isInitial
-            };
-            _changeManager.AddChange(change);
+            Undo.RecordObject(_stateMachine, "Updated node through graph view");
+
+            _graphData.UpdateNode(id, name, x, y, isInitial);
         }
 
         internal void Remove(Guid id)
         {
-            var change = new RemoveNodePendingChanges()
-            {
-                Context = _stateMachine,
-                SavedData = _nodeData,
-                Id = id
-            };
-            _changeManager.AddChange(change);
+            Undo.RecordObject(_stateMachine, "Removed node through graph view");
+
+            Node node = _graphData.RemoveNode(id);
+            _stateMachine.DeleteState(node.StateId);
         }
 
-        internal Node[] GetAll() => _nodeData.ToArray();
+        internal Node[] GetAll() => _graphData.GetNodes();
     }
 
     public class PortController
     {
-        private ChangeManager _changeManager = null;
-        private List<Node> _nodeData = null;
+        private StateMachine _stateMachine = null;
+        private GraphViewData _graphData = null;
 
-        public PortController(ChangeManager changeManager, List<Node> nodeData)
+        public PortController(StateMachine stateMachine, GraphViewData graphViewData)
         {
-            _changeManager = changeManager;
-            _nodeData = nodeData;
+            _stateMachine = stateMachine;
+            _graphData = graphViewData;
         }
 
         internal void Create(Guid id, Guid nodeId, int index)
         {
-            var change = new CreatePortPendingChanges()
-            {
-                NodeId = nodeId,
-                SavedData = _nodeData,
-                Data = new Port()
-                {
-                    ID = id,
-                    Index = index
-                },
-            };
-            _changeManager.AddChange(change);
+            Undo.RecordObject(_stateMachine, "Created port for node through graph view");
+
+            _graphData.CreatePort(id, nodeId, index);
         }
 
         internal void Update(Guid id, Guid nodeId, int index)
         {
-            var change = new UpdatePortPendingChanges()
-            {
-                SavedData = _nodeData,
-                Id = id,
-                NodeId = nodeId,
-                Index = index
-            };
-            _changeManager.AddChange(change);
+            Undo.RecordObject(_stateMachine, "Updated port for node through graph view");
+
+            _graphData.UpdatePort(id, nodeId, index);
         }
 
         internal void Remove(Guid id, Guid nodeId)
         {
-            var change = new RemovePortPendingChanges()
-            {
-                SavedData = _nodeData,
-                Id = id,
-                NodeId = nodeId
-            };
-            _changeManager.AddChange(change);
+            Undo.RecordObject(_stateMachine, "Removed port for node through graph view");
+
+            _ = _graphData.RemovePort(id, nodeId);
         }
     }
 
     public class StateBehaviourController
     {
         private StateMachine _stateMachine = null;
-        private ChangeManager _changeManager = null;
-        private List<Node> _nodeData = null;
+        private GraphViewData _graphData = null;
 
-        public StateBehaviourController(StateMachine stateMachine, ChangeManager changeManager, List<Node> nodeData)
+        public StateBehaviourController(StateMachine stateMachine, GraphViewData graphViewData)
         {
             _stateMachine = stateMachine;
-            _changeManager = changeManager;
-            _nodeData = nodeData;
+            _graphData = graphViewData;
         }
 
         internal VisualElement Create(Guid nodeId, string typeName)
         {
-            var change = new CreateStateBehaviourPendingChanges()
+            Undo.RecordObject(_stateMachine, "Added state behaviour through graph view");
+
+            int undoID = Undo.GetCurrentGroup();
+            Node nodeData = _graphData.GetNode(nodeId);
+            State state = _stateMachine.GetState(nodeData.StateId);
+            AStateBehaviour stateBehaviour = state.AddStateBehaviour(typeName);
+
+            stateBehaviour.name = Guid.NewGuid().ToString();
+            stateBehaviour.hideFlags = HideFlags.HideInHierarchy;
+
+            Undo.RegisterCreatedObjectUndo(stateBehaviour, "Added state behaviour through graph view");
+            Undo.CollapseUndoOperations(undoID);
+
+            AssetDatabase.AddObjectToAsset(stateBehaviour, _stateMachine);
+            AssetDatabase.SaveAssets();
+
+            return GetInspectorForStateBehaviour(stateBehaviour);
+        }
+
+        internal bool Remove(Guid nodeId, string typeName)
+        {
+            Undo.RecordObject(_stateMachine, "Removed state behaviour through graph view");
+
+            Node nodeData = _graphData.GetNode(nodeId);
+            State state = _stateMachine.GetState(nodeData.StateId);
+            AStateBehaviour stateBehaviour = state.RemoveStateBehaviour(typeName);
+
+            if (stateBehaviour == null)
             {
-                NodeId = nodeId,
-                SavedData = _nodeData,
-                StateBehaviourType = typeName
-            };
-            _changeManager.AddChange(change);
-            Node nodeData = _nodeData.Find((Node node) => node.GraphId == nodeId);
-            AStateBehaviour stateBehaviour = _stateMachine.GetState(nodeData.StateId).AddStateBehaviour(typeName);
+                return false;
+            }
+            AssetDatabase.RemoveObjectFromAsset(stateBehaviour);
+
+            return stateBehaviour;
+        }
+
+        internal VisualElement[] GetElements(Guid nodeId)
+        {
+            Node nodeData = _graphData.GetNode(nodeId);
+            if (nodeData == null)
+            {
+                return new VisualElement[] { };
+            }
+            State state = _stateMachine.GetState(nodeData.StateId);
+            AStateBehaviour[] stateBehaviour = state.GetStateBehaviours();
+
+            return stateBehaviour.Select(GetInspectorForStateBehaviour).ToArray();
+        }
+
+
+        private VisualElement GetInspectorForStateBehaviour(AStateBehaviour stateBehaviour)
+        {
             var editor = UnityEditor.Editor.CreateEditor(stateBehaviour);
-            // Debug.Log($"{editor}");
-            // Debug.Log($"{editor.CreateInspectorGUI()}");
-            // var inspectorIMGUI = new IMGUIContainer(() => UnityEditor.Editor.CreateEditor(stateBehaviour).OnInspectorGUI());
-            // return new InspectorElement(stateBehaviour);
-            // return inspectorIMGUI;
+
             return editor.CreateInspectorGUI();
-        }
-
-        internal void Remove(Guid nodeId, string typeName)
-        {
-            var change = new RemoveStateBehaviourPendingChanges()
-            {
-                SavedData = _nodeData,
-                NodeId = nodeId,
-                StateBehaviourType = typeName
-            };
-            _changeManager.AddChange(change);
-        }
-
-        internal List<string> GetList(Guid nodeId)
-        {
-            Node nodeData = _nodeData.Find(node => node.GraphId == nodeId);
-            return nodeData?.StateBehaviourTypes;
         }
     }
 
     public class EdgeController
     {
         private StateMachine _stateMachine = null;
-        private ChangeManager _changeManager = null;
-        private List<Node> _nodeData = null;
-        private List<Edge> _edgeData = null;
+        private GraphViewData _graphData = null;
 
-        public EdgeController(StateMachine stateMachine, ChangeManager changeManager, List<Node> nodeData, List<Edge> edgeData)
+        public EdgeController(StateMachine stateMachine, GraphViewData graphViewData)
         {
             _stateMachine = stateMachine;
-            _changeManager = changeManager;
-            _nodeData = nodeData;
-            _edgeData = edgeData;
+            _graphData = graphViewData;
         }
 
         internal void Create(Guid outPortId, Guid inNodeId, Guid outNodeId)
         {
-            var change = new CreateEdgePendingChanges()
-            {
-                Context = _stateMachine,
-                NodeData = _nodeData,
-                EdgeData = _edgeData,
-                InNodeId = inNodeId,
-                OutNodeId = outNodeId,
-                OutPortId = outPortId
-            };
-            _changeManager.AddChange(change);
+            Undo.RecordObject(_stateMachine, "Added transition through graph view");
+
+            _ = _graphData.CreateEdge(outPortId, inNodeId, outNodeId);
+
+            Node outNode = _graphData.GetNode(outNodeId);
+            Node inNode = _graphData.GetNode(inNodeId);
+            Port port = _graphData.GetPort(outPortId, outNodeId);
+            _ = _stateMachine.CreateTransition(port.Index, outNode.StateId, inNode.StateId);
         }
 
-        internal void Remove(Guid outPortId, Guid inNodeId)
+        internal void Remove(Guid outPortId, Guid outNodeId)
         {
-            var change = new RemoveEdgePendingChanges()
-            {
-                Context = _stateMachine,
-                NodeData = _nodeData,
-                EdgeData = _edgeData,
-                InNodeId = inNodeId,
-                OutPortId = outPortId
-            };
-            _changeManager.AddChange(change);
+            Undo.RecordObject(_stateMachine, "Removed transition through graph view");
+
+            _ = _graphData.RemoveEdge(outPortId);
+
+            Node node = _graphData.GetNode(outNodeId);
+            Port port = _graphData.GetPort(outPortId, outNodeId);
+            _stateMachine.DeleteTransition(port.Index, node.StateId);
         }
 
-        internal Edge[] GetAll() => _edgeData.ToArray();
+        internal Edge[] GetAll() => _graphData.GetEdges();
     }
 }

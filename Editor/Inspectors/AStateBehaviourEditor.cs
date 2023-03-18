@@ -10,7 +10,11 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor
     {
         public override VisualElement CreateInspectorGUI()
         {
-            var container = new VisualElement();
+            var container = new VisualElement
+            {
+                focusable = true,
+                pickingMode = PickingMode.Position
+            };
 
             SerializedProperty iterator = serializedObject.GetIterator();
             if (iterator.NextVisible(true))

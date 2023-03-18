@@ -33,7 +33,7 @@ public class GSMNode : Node
         _eventInfo = eventInfo;
         _dependencies = dependencies;
         _nodeDetails = new GSMNodeDetails();
-        _nodeDetails.Init(ID, _dependencies.StateBehaviourController.Create, _dependencies.StateBehaviourController.Remove, _dependencies.StateBehaviourController.GetList(ID));
+        _nodeDetails.Init(ID, _dependencies.StateBehaviourController.Create, _dependencies.StateBehaviourController.Remove, _dependencies.StateBehaviourController.GetElements(ID));
         foreach (PortModel port in ports)
         {
             _ = CreateEventOutput(port.ID, port.Index);
@@ -183,23 +183,28 @@ public class GSMNodeDetails : VisualElement
     private VisualElement _container = null;
     private StateBehaviourSearchWindow _searchWindow = null;
     private Func<Guid, string, VisualElement> _createStateBehaviour;
-    private Action<Guid, string> _removeStateBehaviour;
+    private Func<Guid, string, bool> _removeStateBehaviour;
 
     public new class UxmlFactory : UxmlFactory<GSMNodeDetails, VisualElement.UxmlTraits> { }
 
     public GSMNodeDetails() => CreateGUI();
 
-    public void Init(Guid nodeId, Func<Guid, string, VisualElement> createStateBehaviour, Action<Guid, string> removeStateBehaviour, List<string> initialValues)
+    ~GSMNodeDetails()
+    {
+        _addButton.clickable.clicked -= OpenStateBehaviourSearchWindow;
+    }
+
+    public void Init(Guid nodeId, Func<Guid, string, VisualElement> createStateBehaviour, Func<Guid, string, bool> removeStateBehaviour, VisualElement[] initialElements)
     {
         _nodeId = nodeId;
         _createStateBehaviour = createStateBehaviour;
         _removeStateBehaviour = removeStateBehaviour;
 
-        if (initialValues != null)
+        if (initialElements != null)
         {
-            foreach (string typeName in initialValues)
+            foreach (VisualElement element in initialElements)
             {
-                AddNewItem(typeName);
+                AddNewItem(element);
             }
         }
     }
@@ -211,11 +216,6 @@ public class GSMNodeDetails : VisualElement
         _container = this.Q<VisualElement>("behaviour-list");
         _addButton = this.Q<Button>("add-button");
         _addButton.clickable.clicked += OpenStateBehaviourSearchWindow;
-    }
-
-    ~GSMNodeDetails()
-    {
-        _addButton.clickable.clicked -= OpenStateBehaviourSearchWindow;
     }
 
     private void OpenStateBehaviourSearchWindow()
@@ -232,22 +232,19 @@ public class GSMNodeDetails : VisualElement
     private void CreateNewItem(string name)
     {
         VisualElement element = _createStateBehaviour?.Invoke(_nodeId, name);
-        Debug.Log($"{element}");
-        _container.Add(element);
-        // AddNewItem(name);
+        element.RegisterCallback((ContextualMenuPopulateEvent evt) =>
+        {
+            var item = (VisualElement) evt.target;
+            evt.menu.AppendAction("Remove Behaviour", a =>
+            {
+                _ = (_removeStateBehaviour?.Invoke(_nodeId, name));
+                _container.Remove(item);
+            });
+        });
+        AddNewItem(element);
     }
 
-    private void AddNewItem(string name)
-    {
-        var newItem = new StateBehaviourItem(name, RemoveItem);
-        _container.Add(newItem);
-    }
-
-    private void RemoveItem(StateBehaviourItem item)
-    {
-        _removeStateBehaviour?.Invoke(_nodeId, item.Name);
-        _container.Remove(item);
-    }
+    private void AddNewItem(VisualElement element) => _container.Add(element);
 }
 
 public class GameEventSelector : VisualElement
@@ -330,21 +327,25 @@ public class GameEventSelector : VisualElement
 
 public class StateBehaviourItem : VisualElement
 {
-    private Button _removeButton = null;
-    private Label _label = null;
-    public string Name { get; private set; }
+    private Func<Guid, string, bool> _removeItemCallback;
+    private Guid _nodeId;
+    private string _itemId;
 
-    public StateBehaviourItem(string name, Action<StateBehaviourItem> removeItem) : base()
+    public StateBehaviourItem(Guid nodeId, string itemId, Func<Guid, string, bool> removeItemCallback) : base()
     {
-        VisualTreeAsset visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/com.vocario.gamestatemanager/Editor/Resources/NodeBehaviourItem.uxml");
-        Name = name;
+        _nodeId = nodeId;
+        _itemId = itemId;
+        focusable = true;
+        pickingMode = PickingMode.Position;
+        _removeItemCallback = removeItemCallback;
+        RegisterCallback((ContextualMenuPopulateEvent evt) => BuildContextualMenu(evt));
+    }
 
-        visualTree.CloneTree(this);
-        _removeButton = this.Q<Button>("remove-button");
-        _label = this.Q<Label>("name");
+    private void BuildContextualMenu(ContextualMenuPopulateEvent evt)
+    {
+        Vector2 nodePosition = this.ChangeCoordinatesTo(contentContainer, evt.localMousePosition);
 
-        _label.text = name;
-        _removeButton.clicked += () => removeItem(this);
+        evt.menu.AppendAction("Remove Behaviour", a => _removeItemCallback?.Invoke(_nodeId, _itemId));
     }
 }
 

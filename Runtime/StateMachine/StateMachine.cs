@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 using Vocario.EventBasedArchitecture;
+using UnityEditor;
 
 namespace Vocario.GameStateManager
 {
@@ -32,7 +33,7 @@ namespace Vocario.GameStateManager
 
         public T CreateState<T>() where T : State
         {
-            var newState = (T) Activator.CreateInstance(typeof(T), new object[] { this });
+            var newState = (T) Activator.CreateInstance<T>();
 
             if (_initialState == null)
             {
@@ -65,7 +66,7 @@ namespace Vocario.GameStateManager
             _ = _states[ stateId.ToString() ].RemoveTransition(gameEvent);
         }
 
-        internal void AddState(State state)
+        public void AddState(State state)
         {
             if (state == null)
             {
