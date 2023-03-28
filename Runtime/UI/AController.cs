@@ -16,7 +16,7 @@ namespace Vocario.UI
         protected UIDocument _currentDocument = null;
         protected bool _isActive = false;
 
-        internal void Hide()
+        public virtual void Hide()
         {
             if (_currentDocument == null)
             {
@@ -28,7 +28,7 @@ namespace Vocario.UI
             _isActive = false;
         }
 
-        internal void Show(UIDocument mainUIDocument)
+        public virtual void Show(UIDocument mainUIDocument)
         {
             if (_currentDocument != null)
             {

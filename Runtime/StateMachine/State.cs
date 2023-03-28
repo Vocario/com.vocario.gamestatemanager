@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using Vocario.EventBasedArchitecture;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace Vocario.GameStateManager
 {
@@ -11,8 +12,9 @@ namespace Vocario.GameStateManager
         [SerializeField]
         protected string _id = "";
         public Guid Id => Guid.Parse(_id);
+        // TODO Create a dictionary serialized properly by serialized reference
         [SerializeReference]
-        protected TransitionsDictionary _transitions;
+        protected List<Transition> _transitions;
         [SerializeField]
         public bool IsInitial = false;
         [SerializeField]
@@ -25,7 +27,7 @@ namespace Vocario.GameStateManager
         public State()
         {
             _id = Guid.NewGuid().ToString();
-            _transitions = new TransitionsDictionary();
+            _transitions = new List<Transition>();
         }
 
         // TODO Add a contains validation
@@ -36,18 +38,19 @@ namespace Vocario.GameStateManager
                 throw new ArgumentNullException();
             }
             var transition = new Transition(gameEvent, this, to);
-            _transitions[ gameEvent.Name ] = transition;
+            _transitions.Add(transition);
             return transition;
         }
 
         internal bool RemoveTransition(GameEvent gameEvent)
         {
-            if (!_transitions.Contains(gameEvent))
+            Transition transition = _transitions.Find(x => x.GameEventName == gameEvent.Name);
+            if (transition == null)
             {
                 return false;
             }
 
-            _transitions.Remove(gameEvent);
+            _ = _transitions.Remove(transition);
             return true;
         }
 
@@ -106,7 +109,7 @@ namespace Vocario.GameStateManager
 
         public void Enter()
         {
-            foreach (Transition transition in _transitions.Values)
+            foreach (Transition transition in _transitions)
             {
                 transition.Active = true;
             }
@@ -120,7 +123,7 @@ namespace Vocario.GameStateManager
         }
         public void Exit()
         {
-            foreach (Transition transition in _transitions.Values)
+            foreach (Transition transition in _transitions)
             {
                 transition.Active = false;
             }

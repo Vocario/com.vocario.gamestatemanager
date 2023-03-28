@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using Vocario.EventBasedArchitecture;
 using UnityEditor;
+using System.Collections.Generic;
 
 namespace Vocario.GameStateManager
 {
@@ -28,8 +29,8 @@ namespace Vocario.GameStateManager
         // TODO Possible extra validation?
         public State CurrentState = null;
         //TODO Maybe change to dictionary to avoid lookup
-        [SerializeField]
-        protected StatesDictionary _states = new StatesDictionary();
+        [SerializeReference]
+        private List<State> _states = new List<State>();
 
         public T CreateState<T>() where T : State
         {
@@ -46,24 +47,29 @@ namespace Vocario.GameStateManager
 
         public void DeleteState(Guid id)
         {
-            State state = _states[ id.ToString() ];
-            _states.Remove(state);
+            State state = _states.Find(x => x.Id == id);
+            if (state != null)
+            {
+                _ = _states.Remove(state);
+            }
         }
 
+        // TODO Validations for find
         public Transition CreateTransition(int transitionIndex, Guid fromStateId, Guid toStateId)
         {
             var transitionId = (Enum) Enum.Parse(_enumType, transitionIndex.ToString());
-            State fromState = _states[ fromStateId.ToString() ];
-            State toState = _states[ toStateId.ToString() ];
+            State fromState = _states.Find(x => x.Id == fromStateId);
+            State toState = _states.Find(x => x.Id == toStateId);
 
             return fromState.CreateTransition(GetGameEvent(transitionId), toState);
         }
 
+        // TODO Validations for find
         public void DeleteTransition(int transitionIndex, Guid stateId)
         {
             var transitionId = (Enum) Enum.Parse(_enumType, transitionIndex.ToString());
             GameEvent gameEvent = GetGameEvent(transitionId);
-            _ = _states[ stateId.ToString() ].RemoveTransition(gameEvent);
+            _ = _states.Find(x => x.Id == stateId).RemoveTransition(gameEvent);
         }
 
         public void AddState(State state)
@@ -73,11 +79,12 @@ namespace Vocario.GameStateManager
                 // TODO Add log or exception
                 return;
             }
-            _states.Add(state.Id.ToString(), state);
+            _states.Add(state);
 
         }
 
-        public State GetState(Guid id) => _states[ id.ToString() ];
+        // TODO Change list for seializable dictionary for more efficiency
+        public State GetState(Guid id) => _states.Find(x => x.Id == id);
 
         public void Clear() => _states.Clear();
 

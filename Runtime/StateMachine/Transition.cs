@@ -13,6 +13,7 @@ namespace Vocario.GameStateManager
         protected State _to;
         public bool Active = false;
 
+
         public Transition(GameEvent gameEvent, State from, State to) : base(gameEvent)
         {
             if (from == null || to == null)
@@ -20,6 +21,7 @@ namespace Vocario.GameStateManager
                 throw new ArgumentNullException($"Attempted to create transition with To: {to} and From: {from}");
             }
 
+            _gameEvent = gameEvent;
             _from = from;
             _to = to;
 

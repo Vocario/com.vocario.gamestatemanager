@@ -78,7 +78,7 @@ public class GSMGraphView : GraphView
                 {
                     var inNode = (GSMNode) edge.input.node;
                     var outNode = (GSMNode) edge.output.node;
-                    _dependencies.EdgeController.Remove(outNode.GameSelectors[ edge.output ], inNode.ID);
+                    _dependencies.EdgeController.Remove(outNode.GameSelectors[ edge.output ], outNode.ID);
                 }
             }
         }

@@ -27,7 +27,11 @@ namespace Vocario.UI
             {
                 return false;
             }
-            _activeScreenController.Hide();
+
+            if (_activeScreenController != null)
+            {
+                _activeScreenController.Hide();
+            }
             _activeScreenController = controller;
             _activeScreenController.Show(MainUIDocument);
             return true;
