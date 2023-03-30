@@ -57,7 +57,7 @@ namespace Vocario.GameStateManager
         // TODO Validations for find
         public Transition CreateTransition(int transitionIndex, Guid fromStateId, Guid toStateId)
         {
-            var transitionId = (Enum) Enum.Parse(_enumType, transitionIndex.ToString());
+            var transitionId = (Enum) Enum.Parse(EnumType, transitionIndex.ToString());
             State fromState = _states.Find(x => x.Id == fromStateId);
             State toState = _states.Find(x => x.Id == toStateId);
 
@@ -67,7 +67,7 @@ namespace Vocario.GameStateManager
         // TODO Validations for find
         public void DeleteTransition(int transitionIndex, Guid stateId)
         {
-            var transitionId = (Enum) Enum.Parse(_enumType, transitionIndex.ToString());
+            var transitionId = (Enum) Enum.Parse(EnumType, transitionIndex.ToString());
             GameEvent gameEvent = GetGameEvent(transitionId);
             _ = _states.Find(x => x.Id == stateId).RemoveTransition(gameEvent);
         }

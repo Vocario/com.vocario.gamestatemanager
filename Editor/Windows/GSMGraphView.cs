@@ -76,7 +76,6 @@ public class GSMGraphView : GraphView
 
                 if (item is Edge edge)
                 {
-                    var inNode = (GSMNode) edge.input.node;
                     var outNode = (GSMNode) edge.output.node;
                     _dependencies.EdgeController.Remove(outNode.GameSelectors[ edge.output ], outNode.ID);
                 }

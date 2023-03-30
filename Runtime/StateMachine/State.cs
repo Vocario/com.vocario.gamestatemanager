@@ -61,7 +61,7 @@ namespace Vocario.GameStateManager
                 return null;
             }
 
-            Type type = GetType(typeString.Trim());
+            Type type = Utility.GetType(typeString.Trim());
             if (!type.IsSubclassOf(typeof(AStateBehaviour)))
             {
                 Debug.Log($"{type.IsSubclassOf(typeof(AStateBehaviour))}");
@@ -72,25 +72,6 @@ namespace Vocario.GameStateManager
 
             _stateBehaviours.Add(typeString, behaviourInstance);
             return behaviourInstance;
-        }
-
-        public static Type GetType(string typeName)
-        {
-            var type = Type.GetType(typeName);
-            if (type != null)
-            {
-                return type;
-            }
-
-            foreach (System.Reflection.Assembly a in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                type = a.GetType(typeName);
-                if (type != null)
-                {
-                    return type;
-                }
-            }
-            return null;
         }
 
         public AStateBehaviour RemoveStateBehaviour(string typeString)

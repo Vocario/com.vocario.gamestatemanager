@@ -232,19 +232,21 @@ public class GSMNodeDetails : VisualElement
     private void CreateNewItem(string name)
     {
         VisualElement element = _createStateBehaviour?.Invoke(_nodeId, name);
-        element.RegisterCallback((ContextualMenuPopulateEvent evt) =>
-        {
-            var item = (VisualElement) evt.target;
-            evt.menu.AppendAction("Remove Behaviour", a =>
-            {
-                _ = (_removeStateBehaviour?.Invoke(_nodeId, name));
-                _container.Remove(item);
-            });
-        });
+
         AddNewItem(element);
     }
 
-    private void AddNewItem(VisualElement element) => _container.Add(element);
+    private void AddNewItem(VisualElement element)
+    {
+        Button removeButton = element.Q<Button>("remove-button");
+
+        removeButton.clicked += () =>
+        {
+            _ = (_removeStateBehaviour?.Invoke(_nodeId, element.name));
+            _container.Remove(element);
+        };
+        _container.Add(element);
+    }
 }
 
 public class GameEventSelector : VisualElement

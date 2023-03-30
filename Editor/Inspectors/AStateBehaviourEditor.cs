@@ -12,6 +12,7 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor
         {
             var container = new VisualElement
             {
+                name = serializedObject.targetObject.GetType().ToString(),
                 focusable = true,
                 pickingMode = PickingMode.Position
             };
@@ -33,6 +34,12 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor
                 }
                 while (iterator.NextVisible(false));
             }
+            var removeButton = new Button
+            {
+                name = "remove-button",
+                text = "Remove Behaviour"
+            };
+            container.Add(removeButton);
 
             return container;
         }
