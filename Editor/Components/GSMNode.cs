@@ -100,9 +100,9 @@ public class GSMNode : Node
     public Port CreateEventOutput(Guid id, int index)
     {
         Port outputPort = InstantiatePort(Orientation.Horizontal,
-                                          Direction.Output,
-                                          Port.Capacity.Single,
-                                          typeof(PortSource<Transition>));
+                                        Direction.Output,
+                                        Port.Capacity.Single,
+                                        typeof(PortSource<Transition>));
         Label portLabel = outputPort.contentContainer.Q<Label>("type");
 
         portLabel.text = "";
