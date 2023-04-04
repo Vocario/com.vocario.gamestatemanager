@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <ui:VisualElement name="selector" class="unity-base-field unity-base-field--no-label unity-object-field">
+        <ui:VisualElement name="container" class="unity-base-field__input unity-object-field__input">
+            <ui:VisualElement name="game-event-field-display" class="unity-object-field__object unity-object-field-display">
+                <ui:VisualElement name="image" class="unity-image unity-object-field-display__icon" style="background-image: resource(&apos;pro/actionTreeBackgroundWithoutBorder&apos;);" />
+                <ui:Label text="Label" display-tooltip-when-elided="true" name="label" class="unity-object-field-display__label" style="-unity-text-align: middle-left;" />
+            </ui:VisualElement>
+            <ui:Button display-tooltip-when-elided="true" name="game-event-field-selector" class="unity-object-field__selector" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

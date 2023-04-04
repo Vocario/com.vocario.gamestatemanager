@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEditor.Experimental.GraphView;
 using System.Collections.Generic;
-using System;
 
 public class GSMSearchWindow : ScriptableObject, ISearchWindowProvider
 {
@@ -18,9 +17,22 @@ public class GSMSearchWindow : ScriptableObject, ISearchWindowProvider
 
     public List<SearchTreeEntry> CreateSearchTree(SearchWindowContext context)
     {
-        var searchTreeEntries = new List<SearchTreeEntry>();
-        return searchTreeEntries;
+        var header = new List<SearchTreeEntry>()
+        {
+            new SearchTreeGroupEntry(new GUIContent("Create Elements")),
+            new SearchTreeEntry(new GUIContent("New State", _indentationIcon))
+            {
+                level = 1
+            }
+        };
+
+        return header;
     }
 
-    public bool OnSelectEntry(SearchTreeEntry SearchTreeEntry, SearchWindowContext context) => false;
+    public bool OnSelectEntry(SearchTreeEntry searchTreeEntry, SearchWindowContext context)
+    {
+        Vector2 localMousePosition = _graphView.GetLocalMousePosition(context.screenMousePosition, true);
+        _ = _graphView.CreateNode("DialogueName", localMousePosition);
+        return true;
+    }
 }
