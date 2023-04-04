@@ -21,9 +21,10 @@ public class GameEventSearchWindow : ScriptableObject, ISearchWindowProvider
     // TODO Only add events that are not handled on the state already
     public List<SearchTreeEntry> CreateSearchTree(SearchWindowContext context)
     {
+        Texture icon = EditorGUIUtility.FindTexture("d_cs Script Icon");
         var header = new List<SearchTreeEntry>() { new SearchTreeGroupEntry(new GUIContent("State Behaviours")) };
         IEnumerable<SearchTreeEntry> searchTreeEntries = _eventInfo
-            .Select(eventInfo => new SearchTreeEntry(new GUIContent(eventInfo.Name, EditorGUIUtility.FindTexture("d_cs Script Icon")))
+            .Select(eventInfo => new SearchTreeEntry(new GUIContent(eventInfo.Name, icon))
             {
                 userData = eventInfo.EnumId,
                 level = 1

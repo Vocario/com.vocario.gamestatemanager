@@ -15,13 +15,14 @@ public class StateBehaviourSearchWindow : ScriptableObject, ISearchWindowProvide
     // TODO Cache and refetch on change
     public List<SearchTreeEntry> CreateSearchTree(SearchWindowContext context)
     {
+        Texture icon = EditorGUIUtility.FindTexture("d_cs Script Icon");
         var header = new List<SearchTreeEntry>() { new SearchTreeGroupEntry(new GUIContent("State Behaviours")) };
         IEnumerable<SearchTreeEntry> searchTreeEntries = AppDomain.CurrentDomain
             .GetAssemblies()
             .Select(assembly => assembly.GetTypes())
             .SelectMany(x => x)
             .Where(type => type.IsSubclassOf(typeof(AStateBehaviour)))
-            .Select(type => new SearchTreeEntry(new GUIContent(type.ToString(), EditorGUIUtility.FindTexture("d_cs Script Icon")))
+            .Select(type => new SearchTreeEntry(new GUIContent(type.ToString(), icon))
             {
                 userData = type,
                 level = 1

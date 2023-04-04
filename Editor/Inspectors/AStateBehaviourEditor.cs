@@ -22,7 +22,10 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor
             {
                 do
                 {
-                    var propertyField = new PropertyField(iterator.Copy(), iterator.displayName) { name = "PropertyField:" + iterator.propertyPath };
+                    var propertyField = new PropertyField(iterator.Copy(), iterator.displayName)
+                    {
+                        name = "PropertyField:" + iterator.propertyPath
+                    };
 
                     if (iterator.propertyPath == "m_Script" && serializedObject.targetObject != null)
                     {

@@ -11,6 +11,7 @@ using EdgeModel = Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor.Mo
 
 public class GSMGraphView : GraphView
 {
+    public const string USS_PATH = "Packages/com.vocario.gamestatemanager/Editor/Resources/GSMGraphView.uss";
     private GSMSearchWindow _searchWindow = null;
     private MiniMap _miniMap = null;
     private GraphViewDependencies _dependencies;
@@ -117,7 +118,8 @@ public class GSMGraphView : GraphView
     {
         GSMEditorWindow editorWindow = EditorWindow.GetWindow<GSMEditorWindow>("Event Flow State Manager");
         Vector2 worldMousePosition = isSearchWindow
-            ? editorWindow.rootVisualElement.ChangeCoordinatesTo(editorWindow.rootVisualElement.parent, mousePosition - editorWindow.position.position)
+            ? editorWindow.rootVisualElement.ChangeCoordinatesTo(editorWindow.rootVisualElement.parent,
+                                                                 mousePosition - editorWindow.position.position)
             : mousePosition;
         Vector2 localMousePosition = contentViewContainer.WorldToLocal(worldMousePosition);
         return localMousePosition;
@@ -136,7 +138,14 @@ public class GSMGraphView : GraphView
     internal GSMNode CreateNode(string name, Vector2 localMousePosition)
     {
         var node = new GSMNode();
-        node.Init(null, name, localMousePosition.x, localMousePosition.y, false, _dependencies.EventInfo, new List<PortModel>(), _dependencies);
+        node.Init(null,
+                  name,
+                  localMousePosition.x,
+                  localMousePosition.y,
+                  false,
+                  _dependencies.EventInfo,
+                  new List<PortModel>(),
+                  _dependencies);
         _dependencies.NodeController.Create(node.ID, name, localMousePosition.x, localMousePosition.y, false);
         AddElement(node);
         Nodes.Add(node.ID, node);
@@ -153,7 +162,7 @@ public class GSMGraphView : GraphView
 
     private void AddStyles()
     {
-        var styleSheet = (StyleSheet) EditorGUIUtility.Load("Packages/com.vocario.gamestatemanager/Editor/Resources/GSMGraphView.uss");
+        var styleSheet = (StyleSheet) EditorGUIUtility.Load(USS_PATH);
 
         styleSheets.Add(styleSheet);
     }

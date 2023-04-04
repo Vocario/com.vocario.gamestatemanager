@@ -8,6 +8,7 @@ using Vocario.EventBasedArchitecture.EventFlowStateMachine;
 
 public class GSMEditorWindow : EditorWindow
 {
+    private const string ASSET_PATH = "Packages/com.vocario.gamestatemanager/Editor/Resources/GSMEditorWindow.uxml";
     private EventFlowStateMachine _stateManager = null;
     private GSMGraphView _graphView = null;
     private ToolbarButton _saveButton = null;
@@ -36,7 +37,11 @@ public class GSMEditorWindow : EditorWindow
         var stateBehaviourController = new StateBehaviourController(_stateManager, _stateManager.GraphViewData);
         var edgeController = new EdgeController(_stateManager, _stateManager.GraphViewData);
 
-        var dependencies = new GraphViewDependencies(eventInfo, nodeController, portController, stateBehaviourController, edgeController);
+        var dependencies = new GraphViewDependencies(eventInfo,
+                                                     nodeController,
+                                                     portController,
+                                                     stateBehaviourController,
+                                                     edgeController);
         _graphView.Init(dependencies);
 
         _saveButton = root.Q<ToolbarButton>();
@@ -46,7 +51,7 @@ public class GSMEditorWindow : EditorWindow
     public void CreateGUI()
     {
         VisualElement root = rootVisualElement;
-        VisualTreeAsset visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/com.vocario.gamestatemanager/Editor/Resources/GSMEditorWindow.uxml");
+        VisualTreeAsset visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(ASSET_PATH);
         visualTree.CloneTree(root);
     }
 
@@ -61,7 +66,11 @@ public class GraphViewDependencies
     public StateBehaviourController StateBehaviourController { get; private set; }
     public EdgeController EdgeController { get; private set; }
 
-    public GraphViewDependencies(List<EventInfo> eventInfo, NodeController nodeController, PortController portController, StateBehaviourController stateBehaviourController, EdgeController edgeController)
+    public GraphViewDependencies(List<EventInfo> eventInfo,
+                                 NodeController nodeController,
+                                 PortController portController,
+                                 StateBehaviourController stateBehaviourController,
+                                 EdgeController edgeController)
     {
         EventInfo = eventInfo;
         NodeController = nodeController;
