@@ -22,7 +22,5 @@ namespace Vocario.GameStateManager.Tests
         // {
         //     // Use the Assert class to test conditions
         // }
-
-        
-    }    
+    }
 }

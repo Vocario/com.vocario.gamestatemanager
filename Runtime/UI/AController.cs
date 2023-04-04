@@ -20,7 +20,7 @@ namespace Vocario.UI
         {
             if (_currentDocument == null)
             {
-                Debug.LogWarning($"[UI @ {GetType()}] - Attempted to hide screen {_screenTemplate} when screen already hidden");
+                Debug.LogWarning($"[UI @ {GetType()}] - Attempted to hide screen {_screenTemplate} already hidden");
                 return;
             }
             _currentDocument.rootVisualElement.RemoveAt(_currentElementIndex);
@@ -32,7 +32,7 @@ namespace Vocario.UI
         {
             if (_currentDocument != null)
             {
-                Debug.LogWarning($"[UI @ {GetType()}] - Attempted to show screen {_screenTemplate} when screen already showned");
+                Debug.LogWarning($"[UI @ {GetType()}] - Attempted to show screen {_screenTemplate} already showned");
                 return;
             }
             _currentDocument = mainUIDocument;

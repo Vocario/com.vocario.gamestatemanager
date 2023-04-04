@@ -8,7 +8,7 @@ using Vocario.EventBasedArchitecture.EventFlowStateMachine;
 
 public class GSMEditorWindow : EditorWindow
 {
-    private const string ASSET_PATH = "Packages/com.vocario.gamestatemanager/Editor/Resources/GSMEditorWindow.uxml";
+    public const string ASSET_PATH = "Packages/com.vocario.gamestatemanager/Editor/Resources/GSMEditorWindow.uxml";
     private EventFlowStateMachine _stateManager = null;
     private GSMGraphView _graphView = null;
     private ToolbarButton _saveButton = null;
@@ -38,10 +38,10 @@ public class GSMEditorWindow : EditorWindow
         var edgeController = new EdgeController(_stateManager, _stateManager.GraphViewData);
 
         var dependencies = new GraphViewDependencies(eventInfo,
-                                                     nodeController,
-                                                     portController,
-                                                     stateBehaviourController,
-                                                     edgeController);
+                                                    nodeController,
+                                                    portController,
+                                                    stateBehaviourController,
+                                                    edgeController);
         _graphView.Init(dependencies);
 
         _saveButton = root.Q<ToolbarButton>();
@@ -67,10 +67,10 @@ public class GraphViewDependencies
     public EdgeController EdgeController { get; private set; }
 
     public GraphViewDependencies(List<EventInfo> eventInfo,
-                                 NodeController nodeController,
-                                 PortController portController,
-                                 StateBehaviourController stateBehaviourController,
-                                 EdgeController edgeController)
+                                NodeController nodeController,
+                                PortController portController,
+                                StateBehaviourController stateBehaviourController,
+                                EdgeController edgeController)
     {
         EventInfo = eventInfo;
         NodeController = nodeController;

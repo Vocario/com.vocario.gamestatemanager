@@ -25,13 +25,13 @@ public class GSMNode : Node
     public Port InputPort { get; protected set; } = null;
 
     public virtual void Init(Guid? id,
-                             string name,
-                             float x,
-                             float y,
-                             bool isInitial,
-                             List<EventInfo> eventInfo,
-                             List<PortModel> ports,
-                             GraphViewDependencies dependencies)
+                            string name,
+                            float x,
+                            float y,
+                            bool isInitial,
+                            List<EventInfo> eventInfo,
+                            List<PortModel> ports,
+                            GraphViewDependencies dependencies)
     {
         ID = id ?? Guid.NewGuid();
         title = name;
@@ -40,9 +40,9 @@ public class GSMNode : Node
         _dependencies = dependencies;
         _nodeDetails = new GSMNodeDetails();
         _nodeDetails.Init(ID,
-                          _dependencies.StateBehaviourController.Create,
-                          _dependencies.StateBehaviourController.Remove,
-                          _dependencies.StateBehaviourController.GetElements(ID));
+                        _dependencies.StateBehaviourController.Create,
+                        _dependencies.StateBehaviourController.Remove,
+                        _dependencies.StateBehaviourController.GetElements(ID));
         foreach (PortModel port in ports)
         {
             _ = CreateEventOutput(port.ID, port.Index);
@@ -71,18 +71,18 @@ public class GSMNode : Node
     public Port CreateEventOutput()
     {
         Port outputPort = InstantiatePort(Orientation.Horizontal,
-                                          Direction.Output,
-                                          Port.Capacity.Single,
-                                          typeof(PortSource<Transition>));
+                                        Direction.Output,
+                                        Port.Capacity.Single,
+                                        typeof(PortSource<Transition>));
         Label portLabel = outputPort.contentContainer.Q<Label>("type");
 
         portLabel.text = "";
         var gameEventSelector = new GameEventSelector(null,
-                                                      null,
-                                                      ID,
-                                                      _eventInfo,
-                                                      _dependencies.PortController.Create,
-                                                      _dependencies.PortController.Update);
+                                                    null,
+                                                    ID,
+                                                    _eventInfo,
+                                                    _dependencies.PortController.Create,
+                                                    _dependencies.PortController.Update);
         outputPort.contentContainer.Add(gameEventSelector);
         var deleteButton = new Button(() => RemovePort(gameEventSelector.Id, outputPort))
         {
@@ -107,11 +107,11 @@ public class GSMNode : Node
 
         portLabel.text = "";
         var gameEventSelector = new GameEventSelector(id,
-                                                      index,
-                                                      ID,
-                                                      _eventInfo,
-                                                      _dependencies.PortController.Create,
-                                                      _dependencies.PortController.Update);
+                                                    index,
+                                                    ID,
+                                                    _eventInfo,
+                                                    _dependencies.PortController.Create,
+                                                    _dependencies.PortController.Update);
         outputPort.contentContainer.Add(gameEventSelector);
         var deleteButton = new Button(() => RemovePort(gameEventSelector.Id, outputPort))
         {
@@ -224,9 +224,9 @@ public class GSMNodeDetails : VisualElement
     }
 
     public void Init(Guid nodeId,
-                     Func<Guid, string, VisualElement> createStateBehaviour,
-                     Func<Guid, string, bool> removeStateBehaviour,
-                     VisualElement[] initialElements)
+                    Func<Guid, string, VisualElement> createStateBehaviour,
+                    Func<Guid, string, bool> removeStateBehaviour,
+                    VisualElement[] initialElements)
     {
         _nodeId = nodeId;
         _createStateBehaviour = createStateBehaviour;
@@ -297,11 +297,11 @@ public class GameEventSelector : VisualElement
     public Guid Id => _id;
 
     public GameEventSelector(Guid? id,
-                             int? index,
-                             Guid nodeId,
-                             List<EventInfo> eventInfo,
-                             Action<Guid, Guid, int> onCreate,
-                             Action<Guid, Guid, int> onUpdate) : base()
+                            int? index,
+                            Guid nodeId,
+                            List<EventInfo> eventInfo,
+                            Action<Guid, Guid, int> onCreate,
+                            Action<Guid, Guid, int> onUpdate) : base()
     {
         _id = id ?? Guid.NewGuid();
         _nodeId = nodeId;

@@ -119,7 +119,7 @@ public class GSMGraphView : GraphView
         GSMEditorWindow editorWindow = EditorWindow.GetWindow<GSMEditorWindow>("Event Flow State Manager");
         Vector2 worldMousePosition = isSearchWindow
             ? editorWindow.rootVisualElement.ChangeCoordinatesTo(editorWindow.rootVisualElement.parent,
-                                                                 mousePosition - editorWindow.position.position)
+                                                                mousePosition - editorWindow.position.position)
             : mousePosition;
         Vector2 localMousePosition = contentViewContainer.WorldToLocal(worldMousePosition);
         return localMousePosition;
@@ -139,13 +139,13 @@ public class GSMGraphView : GraphView
     {
         var node = new GSMNode();
         node.Init(null,
-                  name,
-                  localMousePosition.x,
-                  localMousePosition.y,
-                  false,
-                  _dependencies.EventInfo,
-                  new List<PortModel>(),
-                  _dependencies);
+                name,
+                localMousePosition.x,
+                localMousePosition.y,
+                false,
+                _dependencies.EventInfo,
+                new List<PortModel>(),
+                _dependencies);
         _dependencies.NodeController.Create(node.ID, name, localMousePosition.x, localMousePosition.y, false);
         AddElement(node);
         Nodes.Add(node.ID, node);
