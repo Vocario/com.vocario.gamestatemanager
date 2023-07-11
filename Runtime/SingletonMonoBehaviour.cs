@@ -16,7 +16,6 @@ public class SingletonMonoBehaviour<T> : MonoBehaviour where T : MonoBehaviour
                 var newObject = new GameObject(typeof(T).Name);
 
                 _instance = newObject.AddComponent<T>();
-                _ = newObject.AddComponent<Canvas>();
                 return _instance;
             }
             if (foundInScene != null)

@@ -26,11 +26,13 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine
                 return;
             }
 
+#if UNITY_EDITOR
             GraphViewData = new GraphViewData();
             GraphViewData.Init(this);
             _initialized = true;
             EditorUtility.SetDirty(this);
             AssetDatabase.SaveAssets();
+#endif
         }
     }
 }

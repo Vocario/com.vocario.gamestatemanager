@@ -28,7 +28,7 @@ namespace Vocario.GameStateManager
 
         // TODO Possible extra validation?
         public State CurrentState = null;
-        //TODO Maybe change to dictionary to avoid lookup
+        // TODO Maybe change to dictionary to avoid lookup
         [SerializeReference]
         private List<State> _states = new List<State>();
 
