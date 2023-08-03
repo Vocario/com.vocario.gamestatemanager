@@ -25,7 +25,7 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor
             Node outNode = _graphData.GetNode(outNodeId);
             Node inNode = _graphData.GetNode(inNodeId);
             Port port = _graphData.GetPort(outPortId, outNodeId);
-            _ = _stateMachine.CreateTransition(port.Index, outNode.StateId, inNode.StateId);
+            _ = _stateMachine.CreateTransition(port.Name, outNode.StateId, inNode.StateId);
         }
 
         internal void Remove(Guid outPortId, Guid outNodeId)
@@ -36,7 +36,7 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor
 
             Node node = _graphData.GetNode(outNodeId);
             Port port = _graphData.GetPort(outPortId, outNodeId);
-            _stateMachine.DeleteTransition(port.Index, node.StateId);
+            _stateMachine.DeleteTransition(port.Name, node.StateId);
         }
 
         internal Edge[] GetAll() => _graphData.GetEdges();

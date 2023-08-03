@@ -129,7 +129,7 @@ public class GSMGraphView : GraphView
     internal GSMNode CreateNode(Guid id, string name, float x, float y, bool isInitial, List<PortModel> ports)
     {
         var node = new GSMNode();
-        node.Init(id, name, x, y, isInitial, _dependencies.EventInfo, ports, _dependencies);
+        node.Init(id, name, x, y, isInitial, ports, _dependencies);
         AddElement(node);
         Nodes.Add(node.ID, node);
         return node;
@@ -143,7 +143,6 @@ public class GSMGraphView : GraphView
                 localMousePosition.x,
                 localMousePosition.y,
                 false,
-                _dependencies.EventInfo,
                 new List<PortModel>(),
                 _dependencies);
         _dependencies.NodeController.Create(node.ID, name, localMousePosition.x, localMousePosition.y, false);

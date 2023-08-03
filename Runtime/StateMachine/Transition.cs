@@ -14,7 +14,7 @@ namespace Vocario.GameStateManager
         public bool Active = false;
 
 
-        public Transition(GameEvent gameEvent, State from, State to) : base(gameEvent)
+        public Transition(AGameEvent gameEvent, State from, State to) : base(gameEvent)
         {
             if (from == null || to == null)
             {

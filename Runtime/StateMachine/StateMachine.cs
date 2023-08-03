@@ -7,7 +7,7 @@ using System.Collections.Generic;
 namespace Vocario.GameStateManager
 {
     [Serializable]
-    public class StateMachine : GameEventManager
+    public class StateMachine : ScriptableObject
     {
         [SerializeReference]
         protected State _initialState;
@@ -55,20 +55,18 @@ namespace Vocario.GameStateManager
         }
 
         // TODO Validations for find
-        public Transition CreateTransition(int transitionIndex, Guid fromStateId, Guid toStateId)
+        public Transition CreateTransition(string portEventName, Guid fromStateId, Guid toStateId)
         {
-            var transitionId = (Enum) Enum.Parse(EnumType, transitionIndex.ToString());
             State fromState = _states.Find(x => x.Id == fromStateId);
             State toState = _states.Find(x => x.Id == toStateId);
 
-            return fromState.CreateTransition(GetGameEvent(transitionId), toState);
+            return fromState.CreateTransition(GameEventManager.Instance.GetGameEventByName(portEventName), toState);
         }
 
         // TODO Validations for find
-        public void DeleteTransition(int transitionIndex, Guid stateId)
+        public void DeleteTransition(string portEventName, Guid stateId)
         {
-            var transitionId = (Enum) Enum.Parse(EnumType, transitionIndex.ToString());
-            GameEvent gameEvent = GetGameEvent(transitionId);
+            AGameEvent gameEvent = GameEventManager.Instance.GetGameEventByName(portEventName);
             _ = _states.Find(x => x.Id == stateId).RemoveTransition(gameEvent);
         }
 

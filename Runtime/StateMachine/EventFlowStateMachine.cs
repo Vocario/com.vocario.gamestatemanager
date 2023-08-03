@@ -5,10 +5,10 @@ using Vocario.GameStateManager;
 using UnityEditor;
 using System.Linq;
 using UnityEngine.UIElements;
+using System.Threading;
 
 namespace Vocario.EventBasedArchitecture.EventFlowStateMachine
 {
-    [Serializable]
     [CreateAssetMenu(fileName = "EventFlowStateMachine_", menuName = "Vocario/EventFlowStateMachine", order = 0)]
     public class EventFlowStateMachine : StateMachine
     {
@@ -19,7 +19,7 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine
         [SerializeField]
         private bool _initialized = false;
 
-        private void Awake()
+        protected void Reset()
         {
             if (_initialized)
             {
@@ -89,22 +89,22 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor.Model
 
         public Node[] GetNodes() => _nodeData.Values.ToArray();
 
-        public void CreatePort(Guid id, Guid nodeId, int index)
+        public void CreatePort(Guid id, Guid nodeId, string name)
         {
             Node node = _nodeData[ nodeId.ToString() ];
             var port = new Port()
             {
                 ID = id,
-                Index = index
+                Name = name
             };
             node.Ports.Add(id.ToString(), port);
         }
 
-        public void UpdatePort(Guid id, Guid nodeId, int index)
+        public void UpdatePort(Guid id, Guid nodeId, string name)
         {
             Node node = _nodeData[ nodeId.ToString() ];
             Port port = node.Ports[ id.ToString() ];
-            port.Index = index;
+            port.Name = name;
         }
 
         public bool RemovePort(Guid id, Guid nodeId)
@@ -185,7 +185,6 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor.Model
             set => _id = value.ToString();
         }
         public string Name = "";
-        public int Index = -1;
     }
 
     [Serializable]

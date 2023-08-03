@@ -27,18 +27,12 @@ public class GSMEditorWindow : EditorWindow
 
         _graphView = root.Q<GSMGraphView>();
 
-        var eventInfo = new List<EventInfo>();
-        foreach (KeyValuePair<int, Vocario.EventBasedArchitecture.GameEvent> item in stateManager.Events)
-        {
-            eventInfo.Add(new EventInfo() { EnumId = item.Key, Name = item.Value.Name });
-        }
         var nodeController = new NodeController(_stateManager, _stateManager.GraphViewData);
         var portController = new PortController(_stateManager, _stateManager.GraphViewData);
         var stateBehaviourController = new StateBehaviourController(_stateManager, _stateManager.GraphViewData);
         var edgeController = new EdgeController(_stateManager, _stateManager.GraphViewData);
 
-        var dependencies = new GraphViewDependencies(eventInfo,
-                                                    nodeController,
+        var dependencies = new GraphViewDependencies(nodeController,
                                                     portController,
                                                     stateBehaviourController,
                                                     edgeController);

@@ -31,7 +31,7 @@ namespace Vocario.GameStateManager
         }
 
         // TODO Add a contains validation
-        internal Transition CreateTransition(GameEvent gameEvent, State to)
+        internal Transition CreateTransition(AGameEvent gameEvent, State to)
         {
             if (gameEvent == null || to == null)
             {
@@ -42,7 +42,7 @@ namespace Vocario.GameStateManager
             return transition;
         }
 
-        internal bool RemoveTransition(GameEvent gameEvent)
+        internal bool RemoveTransition(AGameEvent gameEvent)
         {
             Transition transition = _transitions.Find(x => x.GameEventName == gameEvent.Name);
             if (transition == null)

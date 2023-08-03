@@ -29,14 +29,12 @@ public class GSMNode : Node
                             float x,
                             float y,
                             bool isInitial,
-                            List<EventInfo> eventInfo,
                             List<PortModel> ports,
                             GraphViewDependencies dependencies)
     {
         ID = id ?? Guid.NewGuid();
         title = name;
         this.name = name;
-        _eventInfo = eventInfo;
         _dependencies = dependencies;
         _nodeDetails = new GSMNodeDetails();
         _nodeDetails.Init(ID,
@@ -45,7 +43,7 @@ public class GSMNode : Node
                         _dependencies.StateBehaviourController.GetElements(ID));
         foreach (PortModel port in ports)
         {
-            _ = CreateEventOutput(port.ID, port.Index);
+            _ = CreateEventOutput(port.ID, port.Name);
         }
         // TODO Change to render through polimorphism
         if (isInitial)
@@ -80,7 +78,6 @@ public class GSMNode : Node
         var gameEventSelector = new GameEventSelector(null,
                                                     null,
                                                     ID,
-                                                    _eventInfo,
                                                     _dependencies.PortController.Create,
                                                     _dependencies.PortController.Update);
         outputPort.contentContainer.Add(gameEventSelector);
@@ -97,7 +94,7 @@ public class GSMNode : Node
         return outputPort;
     }
 
-    public Port CreateEventOutput(Guid id, int index)
+    public Port CreateEventOutput(Guid id, string name)
     {
         Port outputPort = InstantiatePort(Orientation.Horizontal,
                                         Direction.Output,
@@ -107,9 +104,8 @@ public class GSMNode : Node
 
         portLabel.text = "";
         var gameEventSelector = new GameEventSelector(id,
-                                                    index,
+                                                    name,
                                                     ID,
-                                                    _eventInfo,
                                                     _dependencies.PortController.Create,
                                                     _dependencies.PortController.Update);
         outputPort.contentContainer.Add(gameEventSelector);

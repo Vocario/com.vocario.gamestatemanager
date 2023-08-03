@@ -16,18 +16,18 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor
             _graphData = graphViewData;
         }
 
-        internal void Create(Guid id, Guid nodeId, int index)
+        internal void Create(Guid id, Guid nodeId, string name)
         {
             Undo.RecordObject(_stateMachine, "Created port for node through graph view");
 
-            _graphData.CreatePort(id, nodeId, index);
+            _graphData.CreatePort(id, nodeId, name);
         }
 
-        internal void Update(Guid id, Guid nodeId, int index)
+        internal void Update(Guid id, Guid nodeId, string name)
         {
             Undo.RecordObject(_stateMachine, "Updated port for node through graph view");
 
-            _graphData.UpdatePort(id, nodeId, index);
+            _graphData.UpdatePort(id, nodeId, name);
         }
 
         internal void Remove(Guid id, Guid nodeId)
