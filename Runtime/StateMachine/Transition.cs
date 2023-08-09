@@ -26,10 +26,25 @@ namespace Vocario.GameStateManager
             _to = to;
             GameEventName = gameEvent.AssemblyQualifiedName;
 
-            _ = GameEventManager.TryAddListenerByType(gameEvent, this, RaiseEvent);
+            bool transitionCreated = GameEventManager.TryAddListenerByType(gameEvent, this, RaiseEvent);
+#if UNITY_EDITOR
+            if (transitionCreated)
+            {
+                UnityEditor.EditorUtility.SetDirty(GameEventManager.Instance);
+            }
+#endif
         }
 
-        public void Deregister() => _ = GameEventManager.TryRemoveListenerByType(Type.GetType(GameEventName), this, RaiseEvent);
+        public void Deregister()
+        {
+            bool transitionRemoved = GameEventManager.TryRemoveListenerByType(Type.GetType(GameEventName), this, RaiseEvent);
+#if UNITY_EDITOR
+            if (transitionRemoved)
+            {
+                UnityEditor.EditorUtility.SetDirty(GameEventManager.Instance);
+            }
+#endif
+        }
 
         protected void RaiseEvent()
         {
