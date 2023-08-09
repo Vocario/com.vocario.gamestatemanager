@@ -8,9 +8,9 @@ using Vocario.EventBasedArchitecture;
 
 public class GameEventSearchWindow : ScriptableObject, ISearchWindowProvider
 {
-    private Action<string> _onSelectionCallback = null;
+    private Action<Type> _onSelectionCallback = null;
 
-    internal void Init(Action<string> onSelectionCallback) => _onSelectionCallback = onSelectionCallback;
+    internal void Init(Action<Type> onSelectionCallback) => _onSelectionCallback = onSelectionCallback;
 
     // TODO Cache and refetch on change
     // TODO Only add events that are not handled on the state already
@@ -18,10 +18,10 @@ public class GameEventSearchWindow : ScriptableObject, ISearchWindowProvider
     {
         Texture icon = EditorGUIUtility.FindTexture("d_cs Script Icon");
         var header = new List<SearchTreeEntry>() { new SearchTreeGroupEntry(new GUIContent("State Behaviours")) };
-        IEnumerable<SearchTreeEntry> searchTreeEntries = GameEventManager.Instance.GetEventNames()
-            .Select(eventName => new SearchTreeEntry(new GUIContent(eventName, icon))
+        IEnumerable<SearchTreeEntry> searchTreeEntries = GameEventManager.GetGameEventsTypes()
+            .Select(eventType => new SearchTreeEntry(new GUIContent(eventType.FullName, icon))
             {
-                userData = eventName,
+                userData = eventType,
                 level = 1
             });
 
@@ -30,7 +30,7 @@ public class GameEventSearchWindow : ScriptableObject, ISearchWindowProvider
 
     public bool OnSelectEntry(SearchTreeEntry searchTreeEntry, SearchWindowContext context)
     {
-        _onSelectionCallback?.Invoke((string) searchTreeEntry.userData);
+        _onSelectionCallback?.Invoke((Type) searchTreeEntry.userData);
         return true;
     }
 

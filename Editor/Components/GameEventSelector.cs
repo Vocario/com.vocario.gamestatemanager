@@ -14,16 +14,16 @@ public class GameEventSelector : VisualElement
     private Label _label = null;
     private GameEventSearchWindow _searchWindow = null;
     private Guid _nodeId;
-    private Action<Guid, Guid, string> _onCreate;
-    private Action<Guid, Guid, string> _onUpdate;
+    private Action<Guid, Guid, Type> _onCreate;
+    private Action<Guid, Guid, Type> _onUpdate;
     private Guid _id;
     public Guid Id => _id;
 
     public GameEventSelector(Guid? id,
                             string name,
                             Guid nodeId,
-                            Action<Guid, Guid, string> onCreate,
-                            Action<Guid, Guid, string> onUpdate) : base()
+                            Action<Guid, Guid, Type> onCreate,
+                            Action<Guid, Guid, Type> onUpdate) : base()
     {
         _id = id ?? Guid.NewGuid();
         _nodeId = nodeId;
@@ -31,7 +31,7 @@ public class GameEventSelector : VisualElement
         _onUpdate = onUpdate;
         if (!id.HasValue)
         {
-            _onCreate?.Invoke(_id, nodeId, "");
+            _onCreate?.Invoke(_id, nodeId, null);
         }
 
         VisualTreeAsset visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(ASSET_PATH);
@@ -45,7 +45,7 @@ public class GameEventSelector : VisualElement
         _addButton.clicked += OpenGameEventSearchWindow;
         if (name != null)
         {
-            UpdateValueWithoutNotify(name);
+            UpdateValueWithoutNotify(Type.GetType(name));
         }
     }
 
@@ -54,9 +54,9 @@ public class GameEventSelector : VisualElement
         _addButton.clicked -= OpenGameEventSearchWindow;
     }
 
-    private void UpdateValueWithoutNotify(string value)
+    private void UpdateValueWithoutNotify(Type value)
     {
-        if (value == "")
+        if (value == null || value.FullName == "")
         {
             _imageElement.style.backgroundImage = null;
             _label.text = DEFAULT_LABEL;
@@ -64,10 +64,10 @@ public class GameEventSelector : VisualElement
         }
 
         _imageElement.style.backgroundImage = EditorGUIUtility.FindTexture("d_cs Script Icon");
-        _label.text = value;
+        _label.text = value.FullName;
     }
 
-    private void UpdateValue(string value)
+    private void UpdateValue(Type value)
     {
         UpdateValueWithoutNotify(value);
         _onUpdate?.Invoke(_id, _nodeId, value);

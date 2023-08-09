@@ -10,7 +10,6 @@ using Vocario.GameStateManager;
 public class GSMNode : Node
 {
     public readonly Rect INITIAL_NODE_POSITION = new Rect(100, 200, 100, 150);
-    private List<EventInfo> _eventInfo;
     private GraphViewDependencies _dependencies;
     private GSMNodeDetails _nodeDetails;
     private Label _titleLabel;

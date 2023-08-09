@@ -60,15 +60,13 @@ namespace Vocario.GameStateManager
             State fromState = _states.Find(x => x.Id == fromStateId);
             State toState = _states.Find(x => x.Id == toStateId);
 
-            return fromState.CreateTransition(GameEventManager.Instance.GetGameEventByName(portEventName), toState);
+            return fromState.CreateTransition(Type.GetType(portEventName), toState);
         }
 
         // TODO Validations for find
-        public void DeleteTransition(string portEventName, Guid stateId)
-        {
-            AGameEvent gameEvent = GameEventManager.Instance.GetGameEventByName(portEventName);
-            _ = _states.Find(x => x.Id == stateId).RemoveTransition(gameEvent);
-        }
+        public void DeleteTransition(string portEventName, Guid stateId) => _ = _states
+            .Find(x => x.Id == stateId)
+            .RemoveTransition(Type.GetType(portEventName));
 
         public void AddState(State state)
         {

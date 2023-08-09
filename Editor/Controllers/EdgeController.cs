@@ -18,13 +18,17 @@ namespace Vocario.EventBasedArchitecture.EventFlowStateMachine.Editor
 
         internal void Create(Guid outPortId, Guid inNodeId, Guid outNodeId)
         {
+            Port port = _graphData.GetPort(outPortId, outNodeId);
+            if (string.IsNullOrEmpty(port.Name))
+            {
+                return;
+            }
             Undo.RecordObject(_stateMachine, "Added transition through graph view");
 
             _ = _graphData.CreateEdge(outPortId, inNodeId, outNodeId);
 
             Node outNode = _graphData.GetNode(outNodeId);
             Node inNode = _graphData.GetNode(inNodeId);
-            Port port = _graphData.GetPort(outPortId, outNodeId);
             _ = _stateMachine.CreateTransition(port.Name, outNode.StateId, inNode.StateId);
         }
 
