@@ -5,7 +5,6 @@ using Vocario.GameStateManager;
 using UnityEditor;
 using System.Linq;
 using UnityEngine.UIElements;
-using System.Threading;
 
 namespace Vocario.EventBasedArchitecture.EventFlowStateMachine
 {

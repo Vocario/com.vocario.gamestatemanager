@@ -5,7 +5,7 @@ using Vocario.EventBasedArchitecture;
 namespace Vocario.GameStateManager
 {
     [Serializable]
-    public class Transition
+    public class Transition : ScriptableObject
     {
         [SerializeReference, HideInInspector]
         protected State _from;
@@ -15,7 +15,7 @@ namespace Vocario.GameStateManager
         [field: SerializeField]
         public string GameEventName { get; protected set; }
 
-        public Transition(Type gameEvent, State from, State to)
+        public void Initiate(Type gameEvent, State from, State to)
         {
             if (from == null || to == null)
             {
@@ -46,7 +46,8 @@ namespace Vocario.GameStateManager
 #endif
         }
 
-        protected void RaiseEvent()
+
+        public void RaiseEvent()
         {
             if (Active)
             {

@@ -34,7 +34,7 @@ namespace Vocario.GameStateManager
 
         public T CreateState<T>() where T : State
         {
-            var newState = (T) Activator.CreateInstance<T>();
+            var newState = (T) Activator.CreateInstance(typeof(T), new object[] { this });
 
             if (_initialState == null)
             {

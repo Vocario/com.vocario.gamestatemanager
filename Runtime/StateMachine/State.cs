@@ -15,6 +15,8 @@ namespace Vocario.GameStateManager
         // TODO Create a dictionary serialized properly by serialized reference
         [SerializeReference]
         protected List<Transition> _transitions;
+        [SerializeReference, HideInInspector]
+        protected StateMachine _stateMachine;
         [SerializeField]
         public bool IsInitial = false;
         [SerializeField]
@@ -22,12 +24,13 @@ namespace Vocario.GameStateManager
         [SerializeField]
         public Action OnExitDelegate = null;
         [SerializeField]
-        protected StateBehavioursDictionary _stateBehaviours = new StateBehavioursDictionary();
+        protected StateBehavioursDictionary _stateBehaviours;
 
-        public State()
+        public State(StateMachine stateMachine)
         {
             _id = Guid.NewGuid().ToString();
             _transitions = new List<Transition>();
+            _stateMachine = stateMachine;
         }
 
         // TODO Add a contains validation
@@ -37,7 +40,11 @@ namespace Vocario.GameStateManager
             {
                 throw new ArgumentNullException();
             }
-            var transition = new Transition(gameEvent, this, to);
+            Transition transition = ScriptableObject.CreateInstance<Transition>();
+            transition.Initiate(gameEvent, this, to);
+#if UNITY_EDITOR
+            UnityEditor.AssetDatabase.AddObjectToAsset(transition, _stateMachine);
+#endif
             _transitions.Add(transition);
             return transition;
         }
@@ -50,6 +57,9 @@ namespace Vocario.GameStateManager
                 return false;
             }
 
+#if UNITY_EDITOR
+            UnityEditor.AssetDatabase.RemoveObjectFromAsset(transition);
+#endif
             transition.Deregister();
             _ = _transitions.Remove(transition);
             return true;
