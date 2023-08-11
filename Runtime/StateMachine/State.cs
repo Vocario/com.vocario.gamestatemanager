@@ -42,27 +42,21 @@ namespace Vocario.GameStateManager
             }
             Transition transition = ScriptableObject.CreateInstance<Transition>();
             transition.Initiate(gameEvent, this, to);
-#if UNITY_EDITOR
-            UnityEditor.AssetDatabase.AddObjectToAsset(transition, _stateMachine);
-#endif
             _transitions.Add(transition);
             return transition;
         }
 
-        internal bool RemoveTransition(Type gameEvent)
+        internal Transition RemoveTransition(Type gameEvent)
         {
             Transition transition = _transitions.Find(x => x.GameEventName == gameEvent.ToString());
             if (transition == null)
             {
-                return false;
+                return null;
             }
 
-#if UNITY_EDITOR
-            UnityEditor.AssetDatabase.RemoveObjectFromAsset(transition);
-#endif
             transition.Deregister();
             _ = _transitions.Remove(transition);
-            return true;
+            return transition;
         }
 
         public AStateBehaviour AddStateBehaviour(string typeString)

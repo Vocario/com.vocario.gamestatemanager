@@ -64,7 +64,7 @@ namespace Vocario.GameStateManager
         }
 
         // TODO Validations for find
-        public void DeleteTransition(string portEventName, Guid stateId) => _ = _states
+        public Transition DeleteTransition(string portEventName, Guid stateId) => _states
             .Find(x => x.Id == stateId)
             .RemoveTransition(Type.GetType(portEventName));
 
